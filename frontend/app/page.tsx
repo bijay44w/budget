@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { 
   Eye, GitFork, Star, ArrowRight, User, Copy, Check,
   Wallet, Home, Utensils, Bus, Gamepad2, PiggyBank,
   Sun, Moon
 } from "lucide-react";
-import { UserButton, useAuth } from "@clerk/nextjs";
+import { useAuth } from "@clerk/nextjs";
+import UserProfileButton from "./UserProfileButton";
 
 // Pixel art dollar bill image component cropped from user mockup
 const PixelBill = ({ className }: { className?: string }) => (
@@ -22,7 +23,45 @@ export default function LandingPage() {
   const router = useRouter();
   const [copied, setCopied] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("light");
-  const { isSignedIn } = useAuth();
+  const { isLoaded, isSignedIn } = useAuth();
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
+    const initialTheme = savedTheme || "light";
+    setTheme(initialTheme);
+    if (initialTheme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === "light" ? "dark" : "light";
+    setTheme(nextTheme);
+    localStorage.setItem("theme", nextTheme);
+    if (nextTheme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  };
+
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      const hasVisited = sessionStorage.getItem("visited_landing");
+      if (!hasVisited) {
+        setIsRedirecting(true);
+        sessionStorage.setItem("visited_landing", "true");
+        router.replace("/explore");
+      }
+    }
+  }, [isLoaded, isSignedIn, router]);
+
+  if (isRedirecting) {
+    return null;
+  }
 
   // Static Demo Terminal State
   const yourBudget = {
@@ -129,7 +168,7 @@ export default function LandingPage() {
 
         <div className="flex items-center gap-4">
           <button
-            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+            onClick={toggleTheme}
             className={`p-2 rounded-lg border transition-all ${
               theme === "light"
                 ? "border-slate-200 text-slate-700 hover:bg-slate-50"
@@ -152,7 +191,7 @@ export default function LandingPage() {
               >
                 Go to App
               </button>
-              <UserButton />
+              <UserProfileButton />
             </div>
           ) : (
             <div className="flex items-center gap-3">

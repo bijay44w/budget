@@ -1,11 +1,21 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { GitFork, Eye, ArrowLeftRight, Tag, Wallet, Plus, BookOpen, Layers, ArrowLeft } from "lucide-react";
+import { GitFork, Eye, ArrowLeftRight, Tag, Wallet, Plus, BookOpen, Layers, ArrowLeft, Sun, Moon } from "lucide-react";
 import { Budget, CompareResponse } from "../../types";
-import { useUser, UserButton } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
+import UserProfileButton from "../UserProfileButton";
+import Link from "next/link";
+
+const TreeLogo = ({ className }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2L19 12H15V22H9V12H5L12 2Z" fill="currentColor" />
+    <path d="M12 6L16 12" />
+    <path d="M12 10L8 12" />
+  </svg>
+);
 
 const API_BASE = "http://localhost:8080/api";
 
@@ -15,6 +25,29 @@ export default function BrowsePage() {
   const [selectedTag, setSelectedTag] = useState<string>("");
   const [compareId1, setCompareId1] = useState<string>("");
   const [compareId2, setCompareId2] = useState<string>("");
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme");
+    const initialTheme = savedTheme === "dark" ? "dark" : "light";
+    setTheme(initialTheme);
+    if (initialTheme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, []);
+
+  const handleToggleTheme = () => {
+    const nextTheme = theme === "light" ? "dark" : "light";
+    setTheme(nextTheme);
+    localStorage.setItem("theme", nextTheme);
+    if (nextTheme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  };
 
   const { user, isLoaded } = useUser();
   const userId = user?.id || "";
@@ -115,345 +148,233 @@ export default function BrowsePage() {
   };
 
   return (
-    <div className="flex-1 max-w-7xl w-full mx-auto px-12 py-10">
+    <div className="min-h-screen flex flex-col bg-[#fafafa] dark:bg-[#020402] text-slate-800 dark:text-white transition-all duration-300 font-sans-inter overflow-x-hidden relative">
       
-      {/* Header Panel (matching landing header style) */}
-      <div className="flex items-center justify-between border-b border-slate-900 pb-8 mb-10">
-        <div>
-          <div className="flex items-center gap-3">
+      {/* Top Header Navigation */}
+      <header className="w-full max-w-7xl mx-auto px-6 lg:px-12 py-6 flex items-center justify-between z-40 relative border-b border-slate-200/50 dark:border-slate-800/80">
+        <Link href="/" className="flex items-center gap-2">
+          <TreeLogo className="w-6 h-6 text-green-600 dark:text-[#a8ff35]" />
+          <span className="font-retro text-2xl font-bold tracking-wider text-green-600 dark:text-[#a8ff35]">
+            Budgetree
+          </span>
+        </Link>
+
+        <div className="flex items-center gap-4">
+          {/* Theme Toggle Button */}
+          <button
+            onClick={handleToggleTheme}
+            className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-[#a8ff35] hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-all cursor-pointer"
+            title="Toggle Light/Dark Theme"
+          >
+            {theme === "light" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+          </button>
+
+          {isLoaded && user ? (
+            <UserProfileButton direction="down" align="right" className="w-8 h-8" />
+          ) : (
             <button
-              onClick={() => router.push("/")}
-              className="p-2 hover:bg-slate-900 rounded-xl text-slate-500 hover:text-white transition-all mr-2"
-              title="Back to Landing Page"
+              onClick={() => router.push("/sign-in")}
+              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white dark:bg-[#a8ff35] dark:hover:bg-[#a8ff35]/90 dark:text-black px-5 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-wider font-share-mono transition-all cursor-pointer"
             >
-              <ArrowLeft className="w-5 h-5 text-[#a8ff35]" />
+              Sign in
             </button>
-            <h1 className="text-3xl font-retro tracking-widest text-[#a8ff35] uppercase">
-              Explore Blueprints
-            </h1>
+          )}
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-6 lg:px-12 py-10 z-10 relative">
+        
+        {/* Explore Title Panel */}
+        <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-8 mb-10">
+          <div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => router.push("/")}
+                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-900 rounded-xl text-slate-500 hover:text-slate-900 dark:hover:text-white transition-all mr-2 cursor-pointer"
+                title="Back to Landing Page"
+              >
+                <ArrowLeft className="w-5 h-5 text-green-600 dark:text-[#a8ff35]" />
+              </button>
+              <h1 className="text-3xl font-retro tracking-widest text-green-600 dark:text-[#a8ff35] uppercase">
+                Explore Blueprints
+              </h1>
+            </div>
+            <p className="text-slate-500 dark:text-slate-400 mt-2 font-share-mono text-sm max-w-xl">
+              Fork curated blueprints, track versions, and compare structural allocations.
+            </p>
           </div>
-          <p className="text-slate-400 mt-2 font-share-mono text-sm max-w-xl">
-            Fork curated blueprints, track versions, and compare structural allocations.
-          </p>
         </div>
 
-        {/* User Session Metadata Badge */}
-        {isLoaded && user ? (
-          <div className="flex items-center gap-3 bg-[#0b0e11] border border-slate-800 rounded-2xl px-4 py-2 shadow-xl">
-            <UserButton />
-            <div className="text-left font-share-mono">
-              <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Session Profile</p>
-              <p className="text-sm font-semibold text-white truncate max-w-[120px]">{user.fullName || "User"}</p>
-            </div>
-          </div>
-        ) : (
+        {/* Tag Filters */}
+        <div className="flex flex-wrap items-center gap-2 mb-8 font-share-mono">
+          <span className="text-xs text-slate-500 font-bold uppercase tracking-wider mr-2 flex items-center gap-1.5">
+            <Tag className="w-3.5 h-3.5 text-green-600 dark:text-[#a8ff35]" /> Filter Tags:
+          </span>
           <button
-            onClick={() => router.push("/sign-in")}
-            className="flex items-center gap-2 bg-[#a8ff35] text-black hover:bg-[#a8ff35]/90 px-5 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-wider font-share-mono transition-all"
-          >
-            Sign in
-          </button>
-        )}
-      </div>
-
-      {/* Tag Filters */}
-      <div className="flex flex-wrap items-center gap-2 mb-8 font-share-mono">
-        <span className="text-xs text-slate-500 font-bold uppercase tracking-wider mr-2 flex items-center gap-1.5">
-          <Tag className="w-3.5 h-3.5 text-[#a8ff35]" /> Filter Tags:
-        </span>
-        <button
-          onClick={() => setSelectedTag("")}
-          className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all border ${
-            selectedTag === ""
-              ? "bg-[#a8ff35] text-black border-[#a8ff35] shadow-md"
-              : "bg-[#0b0e11] text-slate-400 border-slate-800 hover:border-slate-700"
-          }`}
-        >
-          All Blueprints
-        </button>
-        {allTags.map((tag) => (
-          <button
-            key={tag}
-            onClick={() => setSelectedTag(tag)}
-            className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all border ${
-              selectedTag === tag
-                ? "bg-[#a8ff35] text-black border-[#a8ff35] shadow-md"
-                : "bg-[#0b0e11] text-slate-400 border-slate-800 hover:border-slate-700"
+            onClick={() => setSelectedTag("")}
+            className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all border cursor-pointer ${
+              selectedTag === ""
+                ? "bg-green-600 text-white border-green-600 dark:bg-[#a8ff35] dark:text-black dark:border-[#a8ff35] shadow-md"
+                : "bg-white dark:bg-[#0b0e11] text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
             }`}
           >
-            {tag}
+            All Blueprints
           </button>
-        ))}
+          {allTags.map((tag) => (
+            <button
+              key={tag}
+              onClick={() => setSelectedTag(tag)}
+              className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all border cursor-pointer ${
+                selectedTag === tag
+                  ? "bg-green-600 text-white border-green-600 dark:bg-[#a8ff35] dark:text-black dark:border-[#a8ff35] shadow-md"
+                  : "bg-white dark:bg-[#0b0e11] text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+              }`}
+            >
+              {tag}
+            </button>
+          ))}
 
-        {/* Create Blank Button */}
-        <button
-          onClick={() => createBlankMutation.mutate()}
-          className="ml-auto flex items-center gap-2 bg-transparent text-[#a8ff35] border border-[#a8ff35] hover:bg-[#a8ff35]/10 px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all"
-        >
-          <Plus className="w-4 h-4" /> New Budget Blueprint
-        </button>
-      </div>
-
-      {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-20">
-          <div className="w-10 h-10 border-4 border-[#a8ff35] border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-slate-500 mt-4 font-share-mono text-sm">Querying budget database...</p>
+          {/* Create Blank Button */}
+          <button
+            onClick={() => createBlankMutation.mutate()}
+            className="ml-auto flex items-center gap-2 bg-transparent text-green-600 dark:text-[#a8ff35] border border-green-600 dark:border-[#a8ff35] hover:bg-green-50 dark:hover:bg-[#a8ff35]/10 px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all cursor-pointer font-share-mono"
+          >
+            <Plus className="w-4 h-4" /> New Budget Blueprint
+          </button>
         </div>
-      ) : error ? (
-        <div className="bg-rose-950/20 border border-rose-900/40 text-rose-500 px-6 py-4 rounded-2xl font-share-mono text-sm">
-          Error loading budgets: {error.message}. Make sure your Go API backend is running on port 8080.
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-          {/* Base Blueprints Section */}
-          <div className="space-y-6">
-            <div className="flex items-center gap-2 border-b border-slate-900 pb-3">
-              <BookOpen className="w-5 h-5 text-slate-500" />
-              <h2 className="text-xl font-retro text-white tracking-wider uppercase">Community Blueprints</h2>
-            </div>
-            {baseTemplates.length === 0 ? (
-              <div className="bg-[#0b0e11] border border-slate-800 rounded-2xl p-8 text-center text-slate-500 font-share-mono text-sm">
-                No community blueprints found matching that tag.
-              </div>
-            ) : (
-              <div className="grid gap-4">
-                {baseTemplates.map((budget) => (
-                  <div
-                    key={budget.id}
-                    className="bg-[#0b0e11] border border-slate-800 hover:border-[#a8ff35]/40 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all"
-                  >
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 className="font-bold text-white text-lg font-share-mono">{budget.name}</h3>
-                        <div className="flex items-center gap-1.5 mt-2 font-share-mono text-xs">
-                          {budget.tags.split(",").map((t) => (
-                            <span
-                              key={t}
-                              className="bg-slate-900 border border-slate-800 text-slate-400 px-2 py-0.5 rounded font-semibold"
-                            >
-                              {t.trim()}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="text-right font-share-mono">
-                        <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Gross Income</p>
-                        <p className="text-lg font-extrabold text-[#a8ff35]">{formatCurrency(budget.income)}</p>
-                      </div>
-                    </div>
 
-                    <div className="border-t border-slate-900 pt-4 mt-4 flex items-center justify-between font-share-mono">
-                      <span className="text-xs text-slate-500 font-medium">
-                        {budget.categories.length} allocation categories
-                      </span>
-                      <button
-                        onClick={() => forkMutation.mutate(budget.id)}
-                        disabled={forkMutation.isPending}
-                        className="flex items-center gap-2 bg-[#a8ff35] hover:bg-[#bbf64a] text-black font-bold text-xs uppercase tracking-wider px-4 py-2 rounded-xl transition-all disabled:opacity-50"
-                      >
-                        <GitFork className="w-3.5 h-3.5" />
-                        {forkMutation.isPending ? "Forking..." : "Fork Budget"}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="w-10 h-10 border-4 border-green-600 dark:border-[#a8ff35] border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-slate-500 mt-4 font-share-mono text-sm">Querying budget database...</p>
           </div>
-
-          {/* User Forks Section */}
-          <div className="space-y-6">
-            <div className="flex items-center gap-2 border-b border-slate-900 pb-3">
-              <GitFork className="w-5 h-5 text-slate-500" />
-              <h2 className="text-xl font-retro text-white tracking-wider uppercase">Active Forks & Versions</h2>
-            </div>
-            {userForks.length === 0 ? (
-              <div className="bg-[#0b0e11] border border-slate-800 rounded-2xl p-8 text-center text-slate-500 font-share-mono text-sm">
-                No active forks under your profile. Fork a community blueprint on the left to start!
+        ) : error ? (
+          <div className="bg-red-50 dark:bg-rose-950/20 border border-red-200 dark:border-rose-900/40 text-red-600 dark:text-rose-500 px-6 py-4 rounded-2xl font-share-mono text-sm">
+            Error loading budgets: {error.message}. Make sure your Go API backend is running on port 8080.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+            
+            {/* Base Blueprints Section */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
+                <BookOpen className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+                <h2 className="text-xl font-retro text-slate-900 dark:text-white tracking-wider uppercase">Community Blueprints</h2>
               </div>
-            ) : (
-              <div className="grid gap-4">
-                {userForks.map((budget) => {
-                  const parent = budgets.find((b) => b.id === budget.parent_budget_id);
-                  return (
+              {baseTemplates.length === 0 ? (
+                <div className="bg-white dark:bg-[#0b0e11] border border-slate-200 dark:border-slate-800 rounded-2xl p-8 text-center text-slate-500 font-share-mono text-sm">
+                  No community blueprints found matching that tag.
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {baseTemplates.map((budget) => (
                     <div
                       key={budget.id}
-                      className="bg-[#0b0e11] border border-slate-800 hover:border-[#a8ff35]/40 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all"
+                      className="bg-white dark:bg-[#0b0e11] border border-slate-200 dark:border-slate-800 hover:border-green-500/45 dark:hover:border-[#a8ff35]/40 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all"
                     >
-                      <div className="flex justify-between items-start mb-3">
+                      <div className="flex justify-between items-start mb-4">
                         <div>
-                          <h3 className="font-bold text-white text-lg font-share-mono">{budget.name}</h3>
-                          <div className="flex items-center gap-2 mt-1.5 text-xs font-share-mono">
-                            <span className="text-slate-500">Forked from:</span>
-                            <span className="bg-teal-950/20 text-[#a8ff35] border border-teal-900/40 px-2 py-0.5 rounded font-bold">
-                              {parent ? parent.name : `ID: ${budget.parent_budget_id}`}
-                            </span>
+                          <h3 className="font-bold text-slate-900 dark:text-white text-lg font-share-mono">{budget.name}</h3>
+                          <div className="flex items-center gap-1.5 mt-2 font-share-mono text-xs">
+                            {budget.tags.split(",").map((t) => (
+                              <span
+                                key={t}
+                                className="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded font-semibold"
+                              >
+                                {t.trim()}
+                              </span>
+                            ))}
                           </div>
                         </div>
                         <div className="text-right font-share-mono">
-                          <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Gross Income</p>
-                          <p className="text-lg font-extrabold text-[#a8ff35]">{formatCurrency(budget.income)}</p>
+                          <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">Gross Income</p>
+                          <p className="text-lg font-extrabold text-green-600 dark:text-[#a8ff35]">{formatCurrency(budget.income)}</p>
                         </div>
                       </div>
 
-                      <div className="border-t border-slate-900 pt-4 mt-4 flex items-center justify-between gap-2 font-share-mono">
-                        <span className="text-xs text-slate-500 font-medium">
+                      <div className="border-t border-slate-100 dark:border-slate-900 pt-4 mt-4 flex items-center justify-between font-share-mono">
+                        <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">
                           {budget.categories.length} allocation categories
                         </span>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => router.push(`/diff/${budget.id}`)}
-                            className="flex items-center gap-1.5 bg-amber-950/20 hover:bg-amber-950/40 text-amber-500 border border-amber-900/40 font-bold text-xs px-3.5 py-2 rounded-xl transition-all"
-                          >
-                            <Eye className="w-3.5 h-3.5" /> Diff Log
-                          </button>
-                          <button
-                            onClick={() => router.push(`/edit/${budget.id}`)}
-                            className="flex items-center gap-1.5 bg-teal-950/20 hover:bg-teal-950/40 text-[#a8ff35] border border-teal-900/40 font-bold text-xs px-3.5 py-2 rounded-xl transition-all"
-                          >
-                            Modify Worksheet
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => forkMutation.mutate(budget.id)}
+                          disabled={forkMutation.isPending}
+                          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white dark:bg-[#a8ff35] dark:hover:bg-[#bbf64a] dark:text-black font-bold text-xs uppercase tracking-wider px-4 py-2 rounded-xl transition-all disabled:opacity-50 cursor-pointer"
+                        >
+                          <GitFork className="w-3.5 h-3.5" />
+                          {forkMutation.isPending ? "Forking..." : "Fork Budget"}
+                        </button>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Side-by-Side Comparison Module */}
-      <div className="bg-[#0b0e11] border border-slate-800 rounded-3xl p-8 shadow-xl">
-        <div className="flex items-center gap-3 border-b border-slate-900 pb-5 mb-6">
-          <span className="p-2 bg-slate-900 text-[#a8ff35] rounded-xl">
-            <ArrowLeftRight className="w-5 h-5" />
-          </span>
-          <div>
-            <h2 className="text-xl font-retro text-white tracking-wider uppercase">Side-by-Side Comparison Matrix</h2>
-            <p className="text-sm text-slate-400 font-share-mono text-xs mt-0.5">Select any two budgets to compare primary KPIs side-by-side.</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 font-share-mono">
-          <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Budget Blueprint 1</label>
-            <select
-              value={compareId1}
-              onChange={(e) => setCompareId1(e.target.value)}
-              className="w-full bg-[#070a0e] border border-slate-800 hover:border-slate-700 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-300 focus:outline-none focus:border-[#a8ff35] transition-all"
-            >
-              <option value="">-- Choose Budget --</option>
-              {budgets.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name} ({b.parent_budget_id ? "Fork" : "Base"})
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Budget Blueprint 2</label>
-            <select
-              value={compareId2}
-              onChange={(e) => setCompareId2(e.target.value)}
-              className="w-full bg-[#070a0e] border border-slate-800 hover:border-slate-700 rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-300 focus:outline-none focus:border-[#a8ff35] transition-all"
-            >
-              <option value="">-- Choose Budget --</option>
-              {budgets.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.name} ({b.parent_budget_id ? "Fork" : "Base"})
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {compareData ? (
-          <div className="border border-slate-800 rounded-2xl overflow-hidden font-share-mono">
-            <table className="w-full text-left border-collapse text-sm">
-              <thead>
-                <tr className="bg-[#070a0e] border-b border-slate-800">
-                  <th className="px-6 py-4 font-bold text-slate-500 uppercase tracking-wider text-xs">Financial Metric</th>
-                  <th className="px-6 py-4 font-bold text-white">{compareData.budget1.name}</th>
-                  <th className="px-6 py-4 font-bold text-white">{compareData.budget2.name}</th>
-                  <th className="px-6 py-4 font-bold text-slate-500 uppercase tracking-wider text-xs text-center">Variance</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-900/60 bg-[#0b0e11]">
-                <tr>
-                  <td className="px-6 py-4 font-semibold text-slate-400">Gross Income</td>
-                  <td className="px-6 py-4 font-extrabold text-white">
-                    {formatCurrency(compareData.budget1.income)}
-                  </td>
-                  <td className="px-6 py-4 font-extrabold text-[#a8ff35]">
-                    {formatCurrency(compareData.budget2.income)}
-                  </td>
-                  <td className={`px-6 py-4 font-bold text-center ${
-                    compareData.budget2.income - compareData.budget1.income >= 0 ? "text-emerald-500" : "text-rose-500"
-                  }`}>
-                    {compareData.budget2.income - compareData.budget1.income >= 0 ? "+" : ""}
-                    {formatCurrency(compareData.budget2.income - compareData.budget1.income)}
-                  </td>
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 font-semibold text-slate-400">Monthly Spending</td>
-                  <td className="px-6 py-4 font-extrabold text-white">
-                    {formatCurrency(compareData.budget1.monthly_spend)}
-                  </td>
-                  <td className="px-6 py-4 font-extrabold text-[#a8ff35]">
-                    {formatCurrency(compareData.budget2.monthly_spend)}
-                  </td>
-                  <td className={`px-6 py-4 font-bold text-center ${
-                    compareData.budget1.monthly_spend - compareData.budget2.monthly_spend >= 0 ? "text-emerald-500" : "text-rose-500"
-                  }`}>
-                    {compareData.budget2.monthly_spend - compareData.budget1.monthly_spend > 0 ? "+" : ""}
-                    {formatCurrency(compareData.budget2.monthly_spend - compareData.budget1.monthly_spend)}
-                  </td>
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 font-semibold text-slate-400">Total Allocated Savings</td>
-                  <td className="px-6 py-4 font-extrabold text-white">
-                    {formatCurrency(compareData.budget1.savings)}
-                  </td>
-                  <td className="px-6 py-4 font-extrabold text-[#a8ff35]">
-                    {formatCurrency(compareData.budget2.savings)}
-                  </td>
-                  <td className={`px-6 py-4 font-bold text-center ${
-                    compareData.budget2.savings - compareData.budget1.savings >= 0 ? "text-emerald-500" : "text-rose-500"
-                  }`}>
-                    {compareData.budget2.savings - compareData.budget1.savings >= 0 ? "+" : ""}
-                    {formatCurrency(compareData.budget2.savings - compareData.budget1.savings)}
-                  </td>
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 font-semibold text-slate-400">Savings Rate</td>
-                  <td className="px-6 py-4 font-extrabold text-white">
-                    {compareData.budget1.savings_rate.toFixed(1)}%
-                  </td>
-                  <td className="px-6 py-4 font-extrabold text-[#a8ff35]">
-                    {compareData.budget2.savings_rate.toFixed(1)}%
-                  </td>
-                  <td className={`px-6 py-4 font-bold text-center ${
-                    compareData.budget2.savings_rate - compareData.budget1.savings_rate >= 0 ? "text-emerald-500" : "text-rose-500"
-                  }`}>
-                    {compareData.budget2.savings_rate - compareData.budget1.savings_rate >= 0 ? "+" : ""}
-                    {(compareData.budget2.savings_rate - compareData.budget1.savings_rate).toFixed(1)}%
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          compareId1 &&
-          compareId2 && (
-            <div className="flex justify-center items-center py-6 text-slate-500 font-share-mono text-xs">
-              <div className="w-5 h-5 border-2 border-[#a8ff35] border-t-transparent rounded-full animate-spin mr-2"></div>
-              Running comparative variance engine...
+                  ))}
+                </div>
+              )}
             </div>
-          )
+
+            {/* User Forks Section */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
+                <GitFork className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+                <h2 className="text-xl font-retro text-slate-900 dark:text-white tracking-wider uppercase">Active Forks & Versions</h2>
+              </div>
+              {userForks.length === 0 ? (
+                <div className="bg-white dark:bg-[#0b0e11] border border-slate-200 dark:border-slate-800 rounded-2xl p-8 text-center text-slate-500 font-share-mono text-sm">
+                  No active forks under your profile. Fork a community blueprint on the left to start!
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {userForks.map((budget) => {
+                    const parent = budgets.find((b) => b.id === budget.parent_budget_id);
+                    return (
+                      <div
+                        key={budget.id}
+                        className="bg-white dark:bg-[#0b0e11] border border-slate-200 dark:border-slate-800 hover:border-green-500/45 dark:hover:border-[#a8ff35]/40 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all"
+                      >
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
+                            <h3 className="font-bold text-slate-900 dark:text-white text-lg font-share-mono">{budget.name}</h3>
+                            <div className="flex items-center gap-2 mt-1.5 text-xs font-share-mono">
+                              <span className="text-slate-400 dark:text-slate-500">Forked from:</span>
+                              <span className="bg-teal-50 dark:bg-teal-950/20 text-teal-700 dark:text-[#a8ff35] border border-teal-100 dark:border-teal-900/40 px-2 py-0.5 rounded font-bold">
+                                {parent ? parent.name : `ID: ${budget.parent_budget_id}`}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="text-right font-share-mono">
+                            <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">Gross Income</p>
+                            <p className="text-lg font-extrabold text-green-600 dark:text-[#a8ff35]">{formatCurrency(budget.income)}</p>
+                          </div>
+                        </div>
+
+                        <div className="border-t border-slate-100 dark:border-slate-900 pt-4 mt-4 flex items-center justify-between gap-2 font-share-mono">
+                          <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">
+                            {budget.categories.length} allocation categories
+                          </span>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => router.push(`/diff/${budget.id}`)}
+                              className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/20 hover:bg-amber-100 dark:hover:bg-amber-950/40 text-amber-700 dark:text-amber-500 border border-amber-200 dark:border-amber-900/40 font-bold text-xs px-3.5 py-2 rounded-xl transition-all cursor-pointer"
+                            >
+                              <Eye className="w-3.5 h-3.5" /> Diff Log
+                            </button>
+                            <button
+                              onClick={() => router.push(`/edit/${budget.id}`)}
+                              className="flex items-center gap-1.5 bg-teal-50 dark:bg-teal-950/20 hover:bg-teal-100 dark:hover:bg-teal-950/40 text-green-700 dark:text-[#a8ff35] border border-teal-200 dark:border-teal-900/40 font-bold text-xs px-3.5 py-2 rounded-xl transition-all cursor-pointer"
+                            >
+                              Modify Worksheet
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
         )}
-      </div>
+      </main>
     </div>
   );
 }

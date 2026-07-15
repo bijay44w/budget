@@ -41,14 +41,7 @@ npm run dev
 
 ### 3. Environment
 
-The frontend needs a `frontend/.env.local` file with your Clerk keys:
 
-```
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
-CLERK_SECRET_KEY=sk_test_...
-NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
-NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
-```
 
 ## Project Structure
 

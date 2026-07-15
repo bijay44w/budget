@@ -118,7 +118,7 @@ export default function LandingPage() {
             How it works
           </a>
           <button 
-            onClick={() => router.push("/explore")}
+            onClick={() => router.push(isSignedIn ? "/explore" : "/sign-in")}
             className={`transition-all ${
               theme === "light" ? "text-slate-600 hover:text-slate-900" : "text-[#a8ff35]/80 hover:text-[#a8ff35]"
             }`}
@@ -217,7 +217,7 @@ export default function LandingPage() {
 
             <div className="flex items-center gap-6 mt-8 flex-wrap">
               <button
-                onClick={() => router.push("/explore")}
+                onClick={() => router.push(isSignedIn ? "/explore" : "/sign-in")}
                 className={`flex items-center justify-center gap-2 font-bold px-8 py-3.5 rounded-full text-xs md:text-sm transition-all hover:translate-x-1 duration-200 shadow-md ${
                   theme === "light"
                     ? "bg-[#38a169] hover:bg-[#2f855a] text-white"

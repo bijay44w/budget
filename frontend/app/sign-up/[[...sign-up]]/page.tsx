@@ -4,7 +4,7 @@ export default function SignUpPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#fafafa] dark:bg-[#0b0e11] transition-all p-6">
       <div className="w-full max-w-md bg-white dark:bg-[#070a0e] rounded-3xl border border-slate-100 dark:border-slate-850 p-8 shadow-sm flex flex-col items-center">
-        <SignUp appearance={{
+        <SignUp forceRedirectUrl="/explore" appearance={{
           elements: {
             rootBox: "w-full",
             card: "bg-transparent shadow-none border-0 w-full p-0",

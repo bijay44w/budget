@@ -1,0 +1,25 @@
+# Executables
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Database files
+backend/budgettree.db
+*.db
+*.db-journal
+*.sqlite
+
+# Next.js / Frontend dependencies & build outputs (redundancy check)
+node_modules/
+.next/
+out/
+.env*
+.clerk/
+
+# OS/IDE files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

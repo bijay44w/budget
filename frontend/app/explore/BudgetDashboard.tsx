@@ -57,12 +57,20 @@ export default function BudgetDashboard({ nodes, fmt, isDark, currency, selected
   const incomeNodes = nodes.filter(n => n.type === "income");
   const expenseNodes = nodes.filter(n => n.type !== "income");
   const totalIncome = incomeNodes.reduce((s, n) => s + n.amount, 0);
-  const totalPlanned = expenseNodes.reduce((s, n) => s + n.amount, 0);
+
+  // Only use top-level allocations to prevent double-counting in calculations and charts!
+  const topLevelAllocations = expenseNodes.filter(n => {
+    if (!n.parentId) return true;
+    const parentNode = nodes.find(p => p.id === n.parentId);
+    return !parentNode || parentNode.type === "income";
+  });
+
+  const totalPlanned = topLevelAllocations.reduce((s, n) => s + n.amount, 0);
   const remaining = totalIncome - totalPlanned;
   const allocationPct = totalIncome > 0 ? Math.round((totalPlanned / totalIncome) * 100) : 0;
 
   // Group by type for breakdown
-  const typeGroups = expenseNodes.reduce<Record<string, { amount: number; count: number }>>((acc, n) => {
+  const typeGroups = topLevelAllocations.reduce<Record<string, { amount: number; count: number }>>((acc, n) => {
     acc[n.type] = acc[n.type] || { amount: 0, count: 0 };
     acc[n.type].amount += n.amount;
     acc[n.type].count += 1;
@@ -80,7 +88,7 @@ export default function BudgetDashboard({ nodes, fmt, isDark, currency, selected
     .sort((a, b) => b.value - a.value);
 
   // Individual items for bar chart (top 8)
-  const itemBars = expenseNodes
+  const itemBars = topLevelAllocations
     .filter(n => n.amount > 0)
     .sort((a, b) => b.amount - a.amount)
     .slice(0, 8)

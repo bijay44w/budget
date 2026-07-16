@@ -396,8 +396,6 @@ export default function BudgetPlanPage() {
   });
 
   const totalPlanned = topLevelAllocations.reduce((s, n) => s + n.amount, 0);
-  const totalExpenses = topLevelAllocations.filter(n => ["needs", "debt", "custom"].includes(n.type)).reduce((s, n) => s + n.amount, 0);
-  const totalSavingsInvest = topLevelAllocations.filter(n => ["savings", "investments"].includes(n.type)).reduce((s, n) => s + n.amount, 0);
   const remaining = totalIncome - totalPlanned;
   const edges = nodes.filter(n => n.parentId).map(n => ({ from: n.parentId!, to: n.id }));
 
@@ -700,8 +698,6 @@ export default function BudgetPlanPage() {
               {[
                 { label: "Total Income", value: fmt(totalIncome), sub: "Monthly Salary", icon: Wallet, ic: "text-green-500", ib: "bg-green-100 dark:bg-green-900/40" },
                 { label: "Total Planned", value: fmt(totalPlanned), sub: `${pct(totalPlanned, totalIncome)} of income`, icon: PieChart, ic: "text-blue-500", ib: "bg-blue-100 dark:bg-blue-900/40" },
-                { label: "Total Expenses", value: fmt(totalExpenses), sub: `${pct(totalExpenses, totalIncome)} of income`, icon: BarChart3, ic: "text-red-500", ib: "bg-red-100 dark:bg-red-900/40" },
-                { label: "Total Savings & Invest.", value: fmt(totalSavingsInvest), sub: `${pct(totalSavingsInvest, totalIncome)} of income`, icon: TrendingUp, ic: "text-teal-500", ib: "bg-teal-100 dark:bg-teal-900/40" },
                 { label: "Remaining", value: fmt(remaining), sub: remaining === 0 ? "✓ Fully allocated" : `${pct(remaining, totalIncome)} of income`, icon: Wallet, ic: remaining > 0 ? "text-amber-500" : "text-green-500", ib: remaining > 0 ? "bg-amber-100 dark:bg-amber-900/40" : "bg-green-100 dark:bg-green-900/40" },
               ].map(c => (
                 <div key={c.label} className={`flex-1 flex items-center gap-3 px-3 py-2.5 rounded-xl border ${

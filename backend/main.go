@@ -51,6 +51,7 @@ type Budget struct {
 	ParentBudgetID *uint      `json:"parent_budget_id"`
 	Tags           string     `json:"tags"` // Comma-separated list of tags
 	Categories     []Category `gorm:"constraint:OnDelete:CASCADE;" json:"categories"`
+	Metadata       string     `json:"metadata"` // JSON string for savings, networth, debts, subscriptions
 }
 
 type Category struct {
@@ -73,6 +74,7 @@ type CreateBudgetInput struct {
 	Income     float64         `json:"income"`
 	Tags       string          `json:"tags"`
 	Categories []CategoryInput `json:"categories"`
+	Metadata   string          `json:"metadata"`
 }
 
 type ForkInput struct {
@@ -145,6 +147,7 @@ func main() {
 	api.Post("/budgets", handleCreateBudget)
 	api.Get("/budgets/:id", handleGetBudgetDetail)
 	api.Put("/budgets/:id", handleUpdateBudget)
+	api.Delete("/budgets/:id", handleDeleteBudget)
 	api.Post("/budgets/:id/fork", handleForkBudget)
 	api.Get("/budgets/:id/diff", handleGetDiff)
 	api.Get("/budgets/compare/pair", handleCompareBudgets)
@@ -200,6 +203,7 @@ func handleCreateBudget(c *fiber.Ctx) error {
 		Income: input.Income,
 		UserID: currentUser.ID,
 		Tags:   input.Tags,
+		Metadata: input.Metadata,
 	}
 
 	// Execute within a GORM transactional block
@@ -303,6 +307,7 @@ func handleUpdateBudget(c *fiber.Ctx) error {
 		budget.Name = input.Name
 		budget.Income = input.Income
 		budget.Tags = input.Tags
+		budget.Metadata = input.Metadata
 
 		if err := tx.Save(&budget).Error; err != nil {
 			return err
@@ -377,6 +382,7 @@ func handleForkBudget(c *fiber.Ctx) error {
 		UserID:         currentUser.ID,
 		ParentBudgetID: &parentIDCopy,
 		Tags:           parent.Tags,
+		Metadata:       parent.Metadata,
 	}
 
 	// Transactional copy logic
@@ -595,77 +601,37 @@ func summarizeBudget(b Budget) BudgetSummary {
 }
 
 func seedDatabase(db *gorm.DB) {
-	// Check if seeded already
-	var count int64
-	db.Model(&User{}).Count(&count)
-	if count > 0 {
-		return
+	// Database starts empty
+}
+
+func handleDeleteBudget(c *fiber.Ctx) error {
+	currentUser, err := getCurrentUser(c)
+	if err != nil {
+		return err
 	}
 
-	log.Println("Seeding mock data...")
-
-	// Create Primary Mock User
-	mockUser := User{ID: 1, Name: "Alex Dev"}
-	db.Create(&mockUser)
-
-	// Create Student template
-	studentBudget := Budget{
-		ID:     1,
-		Name:   "Minimal Student Budget Blueprint",
-		Income: 1500,
-		UserID: 1,
-		Tags:   "Student, Frugal",
-		Categories: []Category{
-			{Name: "Rent & Utilities", Amount: 700, Type: "Expense"},
-			{Name: "Groceries", Amount: 250, Type: "Expense"},
-			{Name: "Transit", Amount: 80, Type: "Expense"},
-			{Name: "Textbooks & Gear", Amount: 50, Type: "Expense"},
-			{Name: "High Yield Savings", Amount: 200, Type: "Savings"},
-			{Name: "Emergency Fund", Amount: 100, Type: "Savings"},
-			{Name: "Leisure & Coffee", Amount: 120, Type: "Expense"},
-		},
+	idStr := c.Params("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid budget ID")
 	}
-	db.Create(&studentBudget)
 
-	// Create FIRE template
-	fireBudget := Budget{
-		ID:     2,
-		Name:   "FIRE Blueprint (Financial Independence)",
-		Income: 8000,
-		UserID: 1,
-		Tags:   "FIRE, Remote Worker, Tech",
-		Categories: []Category{
-			{Name: "Housing & Mortgage", Amount: 2000, Type: "Expense"},
-			{Name: "Organic Groceries", Amount: 600, Type: "Expense"},
-			{Name: "Utility Bills", Amount: 300, Type: "Expense"},
-			{Name: "Broad Market ETFs", Amount: 4000, Type: "Savings"},
-			{Name: "Tech Stocks", Amount: 500, Type: "Investment"},
-			{Name: "Travel & Leisure", Amount: 600, Type: "Expense"},
-		},
+	var budget Budget
+	if err := db.First(&budget, id).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return fiber.NewError(fiber.StatusNotFound, "Budget not found")
+		}
+		return fiber.NewError(fiber.StatusInternalServerError, "Failed to retrieve budget: "+err.Error())
 	}
-	db.Create(&fireBudget)
 
-	// Create a Forked example from the FIRE Blueprint with visual diff modifications
-	parentID := uint(2)
-	forkedBudget := Budget{
-		ID:             3,
-		Name:           "My Personal FIRE Journey",
-		Income:         8000,
-		UserID:         1,
-		ParentBudgetID: &parentID,
-		Tags:           "FIRE, Remote Worker, Tech",
-		Categories: []Category{
-			{Name: "Housing & Mortgage", Amount: 1800, Type: "Expense"},   // Modified
-			{Name: "Organic Groceries", Amount: 700, Type: "Expense"},    // Modified
-			{Name: "Utility Bills", Amount: 300, Type: "Expense"},         // Unchanged
-			{Name: "Broad Market ETFs", Amount: 4500, Type: "Savings"},    // Modified
-			{Name: "Tech Stocks", Amount: 500, Type: "Investment"},       // Unchanged
-			// Travel & Leisure is Removed
-			{Name: "Gym & Wellness", Amount: 150, Type: "Expense"},       // Added
-			{Name: "Side Hustle Investing", Amount: 50, Type: "Savings"}, // Added
-		},
+	// Blueprints (mock budgets) have UserID = 1 and parent ID null, let anyone delete them or only owners
+	if budget.UserID != currentUser.ID && budget.UserID != 1 {
+		return fiber.NewError(fiber.StatusForbidden, "You do not own this budget")
 	}
-	db.Create(&forkedBudget)
 
-	log.Println("Mock data seeded successfully!")
+	if err := db.Select("Categories").Delete(&budget).Error; err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "Failed to delete budget: "+err.Error())
+	}
+
+	return c.SendStatus(fiber.StatusNoContent)
 }

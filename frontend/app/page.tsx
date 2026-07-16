@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { 
   Eye, GitFork, Star, ArrowRight, User, Copy, Check,
   Wallet, Home, Utensils, Bus, Gamepad2, PiggyBank,
@@ -126,13 +127,13 @@ export default function LandingPage() {
 
   return (
     <div className={`min-h-screen flex flex-col font-sans-inter select-none overflow-x-hidden relative transition-all duration-300 ${
-      theme === "light" ? "bg-[#fafafa]" : "bg-[#070a0e]"
+      theme === "light" ? "bg-[#e2e8f0]" : "bg-[#070a0e]"
     }`}>
       
       {/* Top Header Navigation */}
       <header className={`w-full max-w-7xl mx-auto px-12 py-6 flex items-center justify-between z-40 relative border-b transition-all ${
         theme === "light" 
-          ? "border-slate-100 bg-[#fafafa]" 
+          ? "border-slate-100 bg-[#e2e8f0]" 
           : "border-slate-900/60 bg-[#070a0e]"
       }`}>
         <div className="flex items-center gap-2">
@@ -164,6 +165,14 @@ export default function LandingPage() {
           >
             Explore Budgets
           </button>
+          <Link 
+            href="/privacy-policy" 
+            className={`transition-all ${
+              theme === "light" ? "text-slate-600 hover:text-slate-900" : "text-[#a8ff35]/80 hover:text-[#a8ff35]"
+            }`}
+          >
+            Privacy Policy
+          </Link>
         </nav>
 
         <div className="flex items-center gap-4">
@@ -360,18 +369,26 @@ export default function LandingPage() {
                     ? `+$${diff.toLocaleString()}` 
                     : `-$${Math.abs(diff).toLocaleString()}`;
                 
-                // Color formatting for Your Budget cell depending on theme and diff status
-                const yourBudgetColorClass = diff !== 0
-                  ? theme === "light"
-                    ? "text-green-600 font-bold"
-                    : "text-[#a8ff35] font-bold"
-                  : theme === "light"
-                    ? "text-slate-800"
-                    : "text-[#a8ff35] font-bold";
+                const isExpense = ["rent", "food", "transport", "entertainment"].includes(row.key);
+                const isPositiveChange = isExpense ? diff < 0 : diff > 0;
+                const isNegativeChange = isExpense ? diff > 0 : diff < 0;
 
-                const diffColorClass = diff > 0 
+                // Color formatting for Your Budget cell depending on theme and diff status
+                const yourBudgetColorClass = diff === 0
+                  ? theme === "light"
+                    ? "text-slate-800"
+                    : "text-white"
+                  : isPositiveChange
+                    ? theme === "light"
+                      ? "text-green-600 font-bold"
+                      : "text-[#a8ff35] font-bold"
+                    : theme === "light"
+                      ? "text-red-600 font-bold"
+                      : "text-rose-500 font-bold";
+
+                const diffColorClass = isPositiveChange
                   ? "text-emerald-500" 
-                  : diff < 0 
+                  : isNegativeChange 
                     ? "text-rose-500" 
                     : "text-transparent";
                 
@@ -687,6 +704,30 @@ export default function LandingPage() {
 
         </div>
       </section>
+
+      {/* Footer Section */}
+      <footer className={`w-full py-12 px-12 border-t z-20 relative transition-all ${
+        theme === "light" 
+          ? "bg-white border-slate-100 text-slate-600" 
+          : "bg-[#0b0e11] border-slate-900/60 text-slate-400"
+      }`}>
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex items-center gap-2">
+            <svg className="w-5 h-5 text-green-600 dark:text-[#a8ff35]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2L19 12H15V22H9V12H5L12 2Z" fill="currentColor" />
+              <path d="M12 6L16 12" />
+              <path d="M12 10L8 12" />
+            </svg>
+            <span className={`font-retro text-lg font-bold tracking-wider ${theme === "light" ? "text-slate-900" : "text-white"}`}>
+              Budgetree
+            </span>
+          </div>
+
+          <div className="font-share-mono text-[10px] text-slate-400 dark:text-slate-500">
+            &copy; 2026 Budgetree. All rights reserved.
+          </div>
+        </div>
+      </footer>
 
       {/* Background organic wavy overlay curve separator (full-bleed below the header) */}
       <div 

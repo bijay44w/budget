@@ -413,6 +413,26 @@ export default function BudgetPlanPage() {
     setShowAddPanel(false);
   };
 
+  const addChildNode = (pId: string) => {
+    const parentNode = nodes.find(n => n.id === pId);
+    if (!parentNode) return;
+    const id = newId();
+    updateNodes(prev => [
+      ...prev,
+      {
+        id,
+        type: "custom",
+        name: "Custom",
+        amount: 0,
+        x: parentNode.x + 220,
+        y: parentNode.y + (Math.random() * 60 - 30),
+        parentId: pId
+      }
+    ]);
+    setSelectedId(id);
+    setMenuNodeId(null);
+  };
+
   const deleteNode = (id: string) => {
     updateNodes(prev => prev.filter(n => n.id !== id).map(n => n.parentId === id ? { ...n, parentId: null } : n));
     if (selectedId === id) setSelectedId(null);
@@ -820,18 +840,7 @@ export default function BudgetPlanPage() {
                           }`} onMouseDown={e => e.stopPropagation()}>
                             <button onClick={() => { startEdit(node.id, "name"); setMenuNodeId(null); }} className={`w-full text-left px-3 py-2 cursor-pointer ${isDark ? "hover:bg-slate-800" : "hover:bg-slate-50"}`}>Rename</button>
                             <button onClick={() => { startEdit(node.id, "amount"); setMenuNodeId(null); }} className={`w-full text-left px-3 py-2 cursor-pointer ${isDark ? "hover:bg-slate-800" : "hover:bg-slate-50"}`}>Edit Amount</button>
-                            <div className={`border-t my-1 ${isDark ? "border-slate-700" : "border-slate-200"}`} />
-                            <p className="px-3 py-1 text-[10px] uppercase tracking-wider text-slate-400">Type</p>
-                            {NODE_TYPES.filter(nt => nt.type !== node.type).map(nt => {
-                              const NtIcon = getNodeIcon("", nt.type);
-                              return (
-                                <button key={nt.type} onClick={() => { updateNodes(prev => prev.map(n => n.id === node.id ? { ...n, type: nt.type } : n)); setMenuNodeId(null); }}
-                                  className={`w-full text-left px-3 py-1.5 cursor-pointer flex items-center gap-2 ${isDark ? "hover:bg-slate-800" : "hover:bg-slate-50"}`}>
-                                  <NtIcon className={`w-3 h-3 ${TYPE_STYLES[nt.type]?.text || ""}`} />
-                                  {nt.label}
-                                </button>
-                              );
-                            })}
+                            <button onClick={() => addChildNode(node.id)} className={`w-full text-left px-3 py-2 text-green-500 font-semibold cursor-pointer ${isDark ? "hover:bg-slate-800" : "hover:bg-slate-50"}`}>+ Add Child Node</button>
                             <div className={`border-t my-1 ${isDark ? "border-slate-700" : "border-slate-200"}`} />
                             {node.parentId && <button onClick={() => disconnectNode(node.id)} className={`w-full text-left px-3 py-2 cursor-pointer ${isDark ? "hover:bg-slate-800" : "hover:bg-slate-50"}`}>Disconnect</button>}
                             <button onClick={() => deleteNode(node.id)} className={`w-full text-left px-3 py-2 text-red-500 cursor-pointer ${isDark ? "hover:bg-red-900/20" : "hover:bg-red-50"}`}>Delete</button>

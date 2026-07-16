@@ -387,9 +387,17 @@ export default function BudgetPlanPage() {
   // --- COMPUTED ---
   const totalIncome = nodes.filter(n => n.type === "income").reduce((s, n) => s + n.amount, 0);
   const allExpenseNodes = nodes.filter(n => n.type !== "income");
-  const totalPlanned = allExpenseNodes.reduce((s, n) => s + n.amount, 0);
-  const totalExpenses = allExpenseNodes.filter(n => ["needs", "debt", "custom"].includes(n.type)).reduce((s, n) => s + n.amount, 0);
-  const totalSavingsInvest = allExpenseNodes.filter(n => ["savings", "investments"].includes(n.type)).reduce((s, n) => s + n.amount, 0);
+
+  // Only sum top-level allocations to prevent double-counting child allocations!
+  const topLevelAllocations = allExpenseNodes.filter(n => {
+    if (!n.parentId) return true;
+    const parentNode = nodes.find(p => p.id === n.parentId);
+    return !parentNode || parentNode.type === "income";
+  });
+
+  const totalPlanned = topLevelAllocations.reduce((s, n) => s + n.amount, 0);
+  const totalExpenses = topLevelAllocations.filter(n => ["needs", "debt", "custom"].includes(n.type)).reduce((s, n) => s + n.amount, 0);
+  const totalSavingsInvest = topLevelAllocations.filter(n => ["savings", "investments"].includes(n.type)).reduce((s, n) => s + n.amount, 0);
   const remaining = totalIncome - totalPlanned;
   const edges = nodes.filter(n => n.parentId).map(n => ({ from: n.parentId!, to: n.id }));
 
@@ -533,13 +541,30 @@ export default function BudgetPlanPage() {
     updateNodes(prev => prev.map(n => {
       if (n.id !== editField.id) return n;
       if (editField.field === "name") return { ...n, name: editValue || n.name };
-      // ponytail: cap amount so total planned ≤ total income
-      let val = Math.max(0, Number(editValue) || 0);
+
+      const childrenSum = prev.filter(c => c.parentId === n.id).reduce((s, c) => s + c.amount, 0);
+      let val = Math.max(childrenSum, Number(editValue) || 0);
+
       if (n.type !== "income") {
-        const income = prev.filter(p => p.type === "income").reduce((s, p) => s + p.amount, 0);
-        const otherPlanned = prev.filter(p => p.type !== "income" && p.id !== n.id).reduce((s, p) => s + p.amount, 0);
-        const maxAllowed = Math.max(0, income - otherPlanned);
-        if (val > maxAllowed) val = maxAllowed;
+        const parent = prev.find(p => p.id === n.parentId);
+        if (parent && parent.type !== "income") {
+          // It is a sub-allocation node
+          const otherChildrenAmount = prev.filter(c => c.parentId === parent.id && c.id !== n.id).reduce((s, c) => s + c.amount, 0);
+          const maxAllowed = Math.max(childrenSum, parent.amount - otherChildrenAmount);
+          if (val > maxAllowed) val = maxAllowed;
+        } else {
+          // It is a top-level allocation node
+          const income = prev.filter(p => p.type === "income").reduce((s, p) => s + p.amount, 0);
+          const otherTopLevelPlanned = prev.filter(p => {
+            if (p.type === "income" || p.id === n.id) return false;
+            if (!p.parentId) return true;
+            const parentNode = prev.find(parent => parent.id === p.parentId);
+            return !parentNode || parentNode.type === "income";
+          }).reduce((s, p) => s + p.amount, 0);
+
+          const maxAllowed = Math.max(childrenSum, income - otherTopLevelPlanned);
+          if (val > maxAllowed) val = maxAllowed;
+        }
       }
       return { ...n, amount: val };
     }));

@@ -854,26 +854,7 @@ export default function FlowNode({ isDark }: FlowNodeProps) {
             )}
           </div>
 
-          {/* ================= BOTTOM PANEL: AI Reflection ================= */}
-          <footer className={`px-6 py-3.5 border-t flex items-center justify-between ${isDark ? "bg-[#0b0e14]/90 border-slate-800" : "bg-white border-slate-200"}`}>
-            <div className="flex items-center gap-3">
-              <Brain className="w-4 h-4 text-purple-500 animate-pulse" />
-              <div className="min-w-0">
-                <span className="text-[10px] font-bold text-purple-400 block uppercase">AI Focus Assistant Reflections</span>
-                <p className="text-[11px] text-slate-400 truncate max-w-2xl">
-                  "Reading is skipped 4 days every week. Move Gym before Dinner tomorrow to protect reading time."
-                </p>
-              </div>
-            </div>
-            
-            <button 
-              onClick={() => setShowAIChat(!showAIChat)}
-              className="px-3.5 py-1.5 bg-slate-900 border border-slate-850 hover:bg-slate-800 text-slate-200 rounded-xl text-[10px] font-bold transition-all flex items-center gap-1"
-            >
-              <Sparkles className="w-3 h-3 text-purple-400" />
-              Ask AI Agent
-            </button>
-          </footer>
+          {/* AI Reflection footer removed as requested */}
         </main>
 
 

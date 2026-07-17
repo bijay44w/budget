@@ -437,24 +437,11 @@ export default function FlowNode({ isDark }: FlowNodeProps) {
         {/* ================= MAIN CONTENT WINDOW ================= */}
         <main className="flex-1 flex flex-col min-w-0">
           
-          {/* Top Bar inside FlowNode */}
           <header className={`px-6 py-3 border-b flex items-center justify-between ${isDark ? "bg-[#0b0e14]/70 border-slate-800" : "bg-white/70 border-slate-200"}`}>
             <div className="flex items-center gap-4">
               <span className="text-xs font-bold text-slate-400">
                 {new Date().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
               </span>
-              <div className="relative">
-                <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500" />
-                <input 
-                  type="text"
-                  placeholder="Quick search nodes..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className={`pl-8 pr-3 py-1 rounded-full text-xs outline-none border focus:border-green-500/50 transition-all ${
-                    isDark ? "bg-slate-900 border-slate-800 text-slate-200" : "bg-slate-100 border-slate-200 text-slate-800"
-                  }`}
-                />
-              </div>
             </div>
           </header>
 

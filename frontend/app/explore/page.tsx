@@ -125,6 +125,7 @@ export default function BudgetPlanPage() {
   const { user, isLoaded } = useUser();
   const { signOut, openUserProfile } = useClerk();
   const canvasRef = useRef<HTMLDivElement>(null);
+  const hasInitializedRef = useRef(false);
 
   // --- THEME ---
   const [theme, setTheme] = useState<"light" | "dark">("dark");
@@ -450,7 +451,8 @@ export default function BudgetPlanPage() {
   };
 
   useEffect(() => {
-    if (isLoaded && user) {
+    if (isLoaded && user && !hasInitializedRef.current) {
+      hasInitializedRef.current = true;
       const initLoad = async () => {
         try {
           setIsLoading(true);

@@ -460,24 +460,7 @@ export default function FlowNode({ isDark }: FlowNodeProps) {
                 onWheel={handleWheel}
               >
                 
-                {/* Empty State Illustration */}
-                {nodes.length === 0 && (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <div className="p-6 rounded-3xl border border-dashed border-slate-700 bg-slate-900/40 text-center space-y-4 max-w-sm pointer-events-auto">
-                      <div className="w-12 h-12 rounded-2xl bg-green-500/10 flex items-center justify-center mx-auto text-green-500">
-                        <Compass className="w-6 h-6 animate-spin" />
-                      </div>
-                      <h3 className="text-sm font-bold text-slate-200">What does your perfect day look like?</h3>
-                      <p className="text-xs text-slate-400">Design your day visually. Connect nodes to indicate the sequence of tasks and events.</p>
-                      <button 
-                        onClick={createDefaultPlan}
-                        className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer"
-                      >
-                        Create Today's Plan
-                      </button>
-                    </div>
-                  </div>
-                )}
+                {/* Empty state placeholder removed as requested */}
 
                 {/* SVG Connections Layer */}
                 {nodes.length > 0 && (

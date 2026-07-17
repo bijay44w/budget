@@ -572,23 +572,18 @@ export default function FlowNode({ isDark }: FlowNodeProps) {
                         onMouseUp={(e) => handleNodeMouseUp(e, node.id)}
                         className={`absolute w-[170px] h-[60px] rounded-xl border flex items-center justify-between transition-all pointer-events-auto cursor-grab active:cursor-grabbing select-none group shadow-md hover:shadow-lg ${
                           node.status === "completed" 
-                            ? "border-green-500 bg-green-500/[0.04] shadow-green-500/10 glow-node" 
+                            ? "border-green-500/80 bg-green-500/[0.03]" 
                             : node.status === "missed"
-                            ? "border-red-500/50 bg-red-500/[0.03] opacity-60"
+                            ? "border-red-500/50 bg-red-500/[0.02] opacity-60"
                             : isSelected
-                            ? "border-green-500 ring-2 ring-green-500/20 bg-slate-900/90"
-                            : isDark ? "bg-slate-900/80 border-slate-800/80 hover:border-slate-700" : "bg-white border-slate-200/80 hover:border-slate-300"
+                            ? "border-green-500 ring-2 ring-green-500/20"
+                            : isDark ? "bg-[#0c1015] border-slate-800/80 hover:border-slate-700" : "bg-white border-slate-200/80 hover:border-slate-300"
                         }`}
                         style={{ 
                           left: `${node.x}px`, 
                           top: `${node.y}px`
                         }}
                       >
-                        {/* Pulse overlay if node is current */}
-                        {node.status === "pending" && !node.parentId && (
-                          <div className="absolute -inset-px rounded-xl border border-green-500/20 animate-pulse pointer-events-none" />
-                        )}
-
                         <div className="flex items-center gap-2.5 px-3 py-2 w-full h-full relative">
                           {/* Icon Badge */}
                           <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${catColor.bg}`}>
@@ -863,11 +858,16 @@ export default function FlowNode({ isDark }: FlowNodeProps) {
       {/* ================= ADD NODE MODAL ================= */}
       {showAddNodeModal && (
         <div className="absolute inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className={`w-full max-w-sm rounded-3xl border p-6 space-y-4 ${isDark ? "bg-[#0b0e14] border-slate-800" : "bg-white border-slate-200"}`}>
+          <div className={`w-full max-w-sm rounded-2xl border p-6 space-y-4 shadow-2xl transition-all ${
+            isDark ? "bg-[#0c1015] border-slate-800 text-slate-200" : "bg-white border-slate-200 text-slate-800"
+          }`}>
             <div className="flex justify-between items-center">
-              <h3 className="text-sm font-bold text-slate-200">Create Focus Node</h3>
-              <button onClick={() => setShowAddNodeModal(false)} className="p-1 text-slate-400 hover:text-slate-200">
-                <X className="w-4 h-4" />
+              <h3 className="text-sm font-bold">Create Focus Node</h3>
+              <button 
+                onClick={() => setShowAddNodeModal(false)} 
+                className={`p-1 rounded cursor-pointer ${isDark ? "hover:bg-slate-800" : "hover:bg-slate-100"}`}
+              >
+                <X className="w-4 h-4 text-slate-400" />
               </button>
             </div>
 
@@ -880,7 +880,9 @@ export default function FlowNode({ isDark }: FlowNodeProps) {
                   placeholder="e.g. Code Review"
                   value={newNodeForm.title}
                   onChange={(e) => setNewNodeForm({ ...newNodeForm, title: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl text-xs bg-slate-900 border border-slate-800 outline-none text-slate-200 focus:border-green-500"
+                  className={`w-full px-3 py-2 text-xs rounded-xl border outline-none transition ${
+                    isDark ? "bg-slate-900 border-slate-800 focus:border-green-500 text-white" : "bg-white border-slate-200 focus:border-green-500 text-slate-800"
+                  }`}
                 />
               </div>
 
@@ -891,7 +893,9 @@ export default function FlowNode({ isDark }: FlowNodeProps) {
                     type="text" 
                     value={newNodeForm.icon}
                     onChange={(e) => setNewNodeForm({ ...newNodeForm, icon: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl text-xs bg-slate-900 border border-slate-800 outline-none text-slate-200 text-center"
+                    className={`w-full px-3 py-2 text-xs rounded-xl border outline-none text-center transition ${
+                      isDark ? "bg-slate-900 border-slate-800 focus:border-green-500 text-white" : "bg-white border-slate-200 focus:border-green-500 text-slate-800"
+                    }`}
                   />
                 </div>
                 <div className="space-y-1">
@@ -900,7 +904,9 @@ export default function FlowNode({ isDark }: FlowNodeProps) {
                     type="text" 
                     value={newNodeForm.time}
                     onChange={(e) => setNewNodeForm({ ...newNodeForm, time: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl text-xs bg-slate-900 border border-slate-800 outline-none text-slate-200 text-center"
+                    className={`w-full px-3 py-2 text-xs rounded-xl border outline-none text-center transition ${
+                      isDark ? "bg-slate-900 border-slate-800 focus:border-green-500 text-white" : "bg-white border-slate-200 focus:border-green-500 text-slate-800"
+                    }`}
                   />
                 </div>
                 <div className="space-y-1">
@@ -909,7 +915,9 @@ export default function FlowNode({ isDark }: FlowNodeProps) {
                     type="text" 
                     value={newNodeForm.duration}
                     onChange={(e) => setNewNodeForm({ ...newNodeForm, duration: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl text-xs bg-slate-900 border border-slate-800 outline-none text-slate-200 text-center"
+                    className={`w-full px-3 py-2 text-xs rounded-xl border outline-none text-center transition ${
+                      isDark ? "bg-slate-900 border-slate-800 focus:border-green-500 text-white" : "bg-white border-slate-200 focus:border-green-500 text-slate-800"
+                    }`}
                   />
                 </div>
               </div>
@@ -920,7 +928,9 @@ export default function FlowNode({ isDark }: FlowNodeProps) {
                   <select
                     value={newNodeForm.category}
                     onChange={(e) => setNewNodeForm({ ...newNodeForm, category: e.target.value as any })}
-                    className="w-full px-3 py-2 rounded-xl text-xs bg-slate-900 border border-slate-800 outline-none text-slate-200 focus:border-green-500 cursor-pointer"
+                    className={`w-full px-3 py-2 text-xs rounded-xl border outline-none cursor-pointer transition ${
+                      isDark ? "bg-slate-900 border-slate-800 focus:border-green-500 text-white" : "bg-white border-slate-200 focus:border-green-500 text-slate-800"
+                    }`}
                   >
                     <option value="work">Work</option>
                     <option value="personal">Personal</option>
@@ -935,7 +945,9 @@ export default function FlowNode({ isDark }: FlowNodeProps) {
                   <select
                     value={newNodeForm.energy}
                     onChange={(e) => setNewNodeForm({ ...newNodeForm, energy: e.target.value as any })}
-                    className="w-full px-3 py-2 rounded-xl text-xs bg-slate-900 border border-slate-800 outline-none text-slate-200 focus:border-green-500 cursor-pointer"
+                    className={`w-full px-3 py-2 text-xs rounded-xl border outline-none cursor-pointer transition ${
+                      isDark ? "bg-slate-900 border-slate-800 focus:border-green-500 text-white" : "bg-white border-slate-200 focus:border-green-500 text-slate-800"
+                    }`}
                   >
                     <option value="high">High Energy</option>
                     <option value="medium">Medium</option>
@@ -949,7 +961,9 @@ export default function FlowNode({ isDark }: FlowNodeProps) {
                 <select
                   value={newNodeForm.parentId}
                   onChange={(e) => setNewNodeForm({ ...newNodeForm, parentId: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl text-xs bg-slate-900 border border-slate-800 outline-none text-slate-200 focus:border-green-500 cursor-pointer"
+                  className={`w-full px-3 py-2 text-xs rounded-xl border outline-none cursor-pointer transition ${
+                    isDark ? "bg-slate-900 border-slate-800 focus:border-green-500 text-white" : "bg-white border-slate-200 focus:border-green-500 text-slate-800"
+                  }`}
                 >
                   <option value="">No connection (Start Node)</option>
                   {nodes.map(n => (
@@ -960,7 +974,7 @@ export default function FlowNode({ isDark }: FlowNodeProps) {
 
               <button 
                 type="submit" 
-                className="w-full py-2 bg-green-600 hover:bg-green-500 text-white rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer"
+                className="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-xs font-semibold transition-all shadow-md cursor-pointer"
               >
                 Create Node
               </button>
@@ -971,7 +985,7 @@ export default function FlowNode({ isDark }: FlowNodeProps) {
 
       {/* ================= AI CHAT COMPONENT ================= */}
       {showAIChat && (
-        <div className="absolute bottom-16 right-6 w-[320px] rounded-3xl border shadow-2xl overflow-hidden flex flex-col z-50 bg-[#0c0f16] border-slate-800">
+        <div className={`absolute bottom-16 right-6 w-[320px] rounded-2xl border shadow-2xl overflow-hidden flex flex-col z-50 ${isDark ? "bg-[#0c1015] border-slate-800 text-slate-200" : "bg-white border-slate-200 text-slate-850"}`}>
           <header className="p-3 bg-green-600 flex items-center justify-between text-white">
             <div className="flex items-center gap-1.5">
               <Brain className="w-4 h-4" />

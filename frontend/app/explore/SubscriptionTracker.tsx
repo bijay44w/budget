@@ -247,9 +247,8 @@ export default function SubscriptionTracker({ isDark, currency, fmt }: { isDark:
           { label: "TOTAL MONTHLY COST", value: fmt(totalMonthlyCost), icon: CreditCard, ic: "text-green-600 dark:text-green-400", ib: "bg-green-100 dark:bg-green-950/40", sub: "▲ 8.5% vs last month" },
           { label: "TOTAL ANNUAL COST", value: fmt(totalAnnualCost), icon: Calendar, ic: "text-blue-600 dark:text-blue-400", ib: "bg-blue-100 dark:bg-blue-950/40", sub: "All subscriptions" },
           { label: "ACTIVE SUBSCRIPTIONS", value: String(activeSubs.length), icon: Layers, ic: "text-purple-600 dark:text-purple-400", ib: "bg-purple-100 dark:bg-purple-950/40", sub: `Across ${categoriesCount} categories` },
-          { label: "POTENTIAL SAVINGS", value: fmt(4200), icon: Sparkles, ic: "text-emerald-600 dark:text-emerald-400", ib: "bg-emerald-100 dark:bg-emerald-950/40", sub: "With optimizations" }
         ].map(c => (
-          <div key={c.label} className={`${cardClass} col-span-3 flex items-center justify-between`}>
+          <div key={c.label} className={`${cardClass} col-span-4 flex items-center justify-between`}>
             <div>
               <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{c.label}</p>
               <p className="text-2xl font-bold mt-1 text-slate-800 dark:text-white">{c.value}</p>

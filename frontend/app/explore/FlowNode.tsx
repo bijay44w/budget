@@ -615,9 +615,9 @@ export default function FlowNode({ isDark }: FlowNodeProps) {
                         key={node.id}
                         onMouseDown={(e) => handleNodeMouseDown(e, node.id)}
                         onMouseUp={(e) => handleNodeMouseUp(e, node.id)}
-                        className={`absolute w-[170px] rounded-2xl border p-3.5 flex flex-col justify-between transition-all pointer-events-auto cursor-grab active:cursor-grabbing select-none group shadow-lg ${
+                        className={`absolute w-[170px] h-[60px] rounded-xl border flex items-center justify-between transition-all pointer-events-auto cursor-grab active:cursor-grabbing select-none group shadow-md hover:shadow-lg ${
                           node.status === "completed" 
-                            ? "border-green-500/80 bg-green-500/[0.04] shadow-green-500/10 glow-node" 
+                            ? "border-green-500 bg-green-500/[0.04] shadow-green-500/10 glow-node" 
                             : node.status === "missed"
                             ? "border-red-500/50 bg-red-500/[0.03] opacity-60"
                             : isSelected
@@ -626,29 +626,31 @@ export default function FlowNode({ isDark }: FlowNodeProps) {
                         }`}
                         style={{ 
                           left: `${node.x}px`, 
-                          top: `${node.y}px`,
-                          boxShadow: node.status === "completed" ? "0 0 20px rgba(34, 197, 94, 0.1)" : undefined
+                          top: `${node.y}px`
                         }}
                       >
                         {/* Pulse overlay if node is current */}
                         {node.status === "pending" && !node.parentId && (
-                          <div className="absolute -inset-px rounded-2xl border border-green-500/20 animate-pulse pointer-events-none" />
+                          <div className="absolute -inset-px rounded-xl border border-green-500/20 animate-pulse pointer-events-none" />
                         )}
 
-                        <div className="flex items-start justify-between">
-                          <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2.5 px-3 py-2 w-full h-full relative">
+                          {/* Icon Badge */}
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${catColor.bg}`}>
                             <span className="text-base select-none">{node.icon}</span>
-                            <div className="min-w-0">
-                              <h4 className="text-xs font-bold truncate leading-tight">{node.title}</h4>
-                              <span className="text-[9px] text-slate-400">{node.time} • {node.duration}</span>
-                            </div>
                           </div>
-                          
-                          {/* Complete status checkbox */}
+
+                          {/* Title & Time */}
+                          <div className="flex-1 min-w-0 flex flex-col justify-center">
+                            <h4 className="text-[11px] font-bold truncate leading-snug">{node.title}</h4>
+                            <span className="text-[9px] text-slate-400 font-medium">{node.time} • {node.duration}</span>
+                          </div>
+
+                          {/* Checkbox button */}
                           <button 
                             onMouseDown={(e) => e.stopPropagation()}
                             onClick={() => toggleNodeStatus(node.id)}
-                            className={`w-4 h-4 rounded-full flex items-center justify-center transition-colors cursor-pointer border ${
+                            className={`w-4 h-4 rounded-full flex items-center justify-center transition-colors cursor-pointer border flex-shrink-0 ${
                               node.status === "completed" 
                                 ? "bg-green-500 border-green-500 text-white" 
                                 : node.status === "missed"
@@ -659,28 +661,13 @@ export default function FlowNode({ isDark }: FlowNodeProps) {
                             {node.status === "completed" && <Check className="w-2.5 h-2.5" />}
                             {node.status === "missed" && <span className="text-[8px] font-bold">X</span>}
                           </button>
-                        </div>
 
-                        {/* Footer info: Priority & Category */}
-                        <div className="mt-3 flex items-center justify-between">
-                          <div className={`text-[8px] px-1.5 py-0.5 rounded-full border font-bold capitalize ${catColor.bg}`}>
-                            {node.category}
-                          </div>
-                          
-                          <div className="flex items-center gap-1.5">
-                            {/* Energy Indicator */}
-                            <span title={`Requires ${node.energy} energy`} className="flex items-center text-[9px] text-slate-500">
-                              <Zap className={`w-2.5 h-2.5 mr-0.5 ${node.energy === "high" ? "text-amber-500" : "text-slate-500"}`} />
-                              {node.energy[0]}
-                            </span>
-                            
-                            {/* Connection Drag Dot */}
-                            <button
-                              onMouseDown={(e) => startConnection(e, node.id)}
-                              className="w-2.5 h-2.5 rounded-full bg-slate-700 border border-slate-500 hover:bg-green-500 hover:border-green-400 cursor-crosshair transition-colors"
-                              title="Drag to connect next node"
-                            />
-                          </div>
+                          {/* Connection Drag Dot */}
+                          <button
+                            onMouseDown={(e) => startConnection(e, node.id)}
+                            className="absolute -right-1 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-slate-700 border border-slate-500 hover:bg-green-500 hover:border-green-400 cursor-crosshair opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Drag to connect next node"
+                          />
                         </div>
 
                         {/* Node controls panel */}
@@ -934,112 +921,7 @@ export default function FlowNode({ isDark }: FlowNodeProps) {
           </footer>
         </main>
 
-        {/* ================= RIGHT SIDEBAR ================= */}
-        <aside className={`w-[220px] border-l p-4 space-y-5 overflow-y-auto ${isDark ? "bg-[#0b0e14] border-slate-800" : "bg-white border-slate-200"}`}>
-          
-          {/* Today's Progress */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Today's Progress</h3>
-            <div className="flex items-baseline justify-between">
-              <span className="text-3xl font-bold tracking-tight text-white">{completionRate}%</span>
-              <span className="text-xs text-slate-500">{completedCount}/{nodes.length} completed</span>
-            </div>
-            <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
-              <div className="h-full bg-green-500 transition-all duration-500" style={{ width: `${completionRate}%` }} />
-            </div>
-          </div>
 
-          <hr className="border-slate-850" />
-
-          {/* Productivity Stats Grid */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="p-3 rounded-2xl border border-slate-850 bg-slate-900/40 text-center">
-              <span className="text-slate-500 text-[10px] block font-medium">Focus Time</span>
-              <span className="font-bold text-sm text-slate-200 mt-1 block">45m</span>
-            </div>
-            <div className="p-3 rounded-2xl border border-slate-850 bg-slate-900/40 text-center">
-              <span className="text-slate-500 text-[10px] block font-medium">Deep Work</span>
-              <span className="font-bold text-sm text-slate-200 mt-1 block">{deepWorkHours.toFixed(1)}h</span>
-            </div>
-          </div>
-
-          {/* Distractions Logger */}
-          <div className={`p-3.5 rounded-2xl border border-slate-850 bg-slate-900/40 flex items-center justify-between`}>
-            <div>
-              <span className="text-slate-500 text-[10px] block font-medium">Distractions</span>
-              <span className="font-bold text-base text-slate-200 mt-0.5 block">{distractions} logged</span>
-            </div>
-            <button 
-              onClick={() => {
-                const nextDist = distractions + 1;
-                setDistractions(nextDist);
-                saveState(nodes, nextDist);
-              }}
-              className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-500 transition-colors"
-              title="Log Distraction"
-            >
-              <PlusCircle className="w-4 h-4" />
-            </button>
-          </div>
-
-          <hr className="border-slate-850" />
-
-          {/* Energy Slider */}
-          <div className="space-y-2">
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-400 font-semibold">Energy Level</span>
-              <span className="font-bold text-green-500">{energyLevel}%</span>
-            </div>
-            <input 
-              type="range" 
-              min="0" 
-              max="100" 
-              value={energyLevel}
-              onChange={(e) => {
-                const val = Number(e.target.value);
-                setEnergyLevel(val);
-                saveState(nodes, distractions, val);
-              }}
-              className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-green-500"
-            />
-          </div>
-
-          {/* Mood Selector */}
-          <div className="space-y-2.5">
-            <span className="text-xs text-slate-400 font-semibold block">Current Mood</span>
-            <div className="flex gap-2 justify-between">
-              {["😊", "🧠", "😴", "😫", "🤩"].map(item => (
-                <button
-                  key={item}
-                  onClick={() => {
-                    setMood(item);
-                    saveState(nodes, distractions, energyLevel, item);
-                  }}
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center text-base border transition-all ${
-                    mood === item 
-                      ? "bg-green-500/10 border-green-500" 
-                      : "bg-slate-900 border-slate-850 hover:bg-slate-800"
-                  }`}
-                >
-                  {item}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <hr className="border-slate-850" />
-
-          {/* Streaks */}
-          <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Flame className="w-5 h-5 text-amber-500" />
-              <div>
-                <span className="text-[10px] text-amber-500 font-bold block uppercase">Focus Streak</span>
-                <span className="text-sm font-black text-slate-100">{streak} Days</span>
-              </div>
-            </div>
-          </div>
-        </aside>
       </div>
 
       {/* ================= ADD NODE MODAL ================= */}

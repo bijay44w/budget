@@ -75,12 +75,12 @@ export default function FlowNode({ isDark }: FlowNodeProps) {
   const [showAddNodeModal, setShowAddNodeModal] = useState(false);
   const [newNodeForm, setNewNodeForm] = useState({
     title: "",
-    icon: "🎯",
+    icon: "📅",
     time: "09:00",
     duration: "1h",
     priority: "medium" as "high" | "medium" | "low",
     energy: "medium" as "high" | "medium" | "low",
-    category: "work" as FlowNodeItem["category"],
+    category: "routine" as FlowNodeItem["category"],
     parentId: ""
   });
 
@@ -337,12 +337,12 @@ export default function FlowNode({ isDark }: FlowNodeProps) {
     setShowAddNodeModal(false);
     setNewNodeForm({
       title: "",
-      icon: "🎯",
+      icon: "📅",
       time: "09:00",
       duration: "1h",
       priority: "medium",
       energy: "medium",
-      category: "work",
+      category: "routine",
       parentId: ""
     });
   };
@@ -847,7 +847,7 @@ export default function FlowNode({ isDark }: FlowNodeProps) {
                 <input 
                   type="text" 
                   required
-                  placeholder="e.g. Code Review"
+                  placeholder="e.g. Morning Jog"
                   value={newNodeForm.title}
                   onChange={(e) => setNewNodeForm({ ...newNodeForm, title: e.target.value })}
                   className={`w-full px-3 py-2 text-xs rounded-xl border outline-none transition ${
@@ -856,90 +856,41 @@ export default function FlowNode({ isDark }: FlowNodeProps) {
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-400 block uppercase">Icon Emoji</label>
+                  <label className="text-[10px] font-bold text-slate-400 block uppercase">Start Time</label>
                   <input 
                     type="text" 
-                    value={newNodeForm.icon}
-                    onChange={(e) => setNewNodeForm({ ...newNodeForm, icon: e.target.value })}
-                    className={`w-full px-3 py-2 text-xs rounded-xl border outline-none text-center transition ${
-                      isDark ? "bg-slate-900 border-slate-800 focus:border-green-500 text-white" : "bg-white border-slate-200 focus:border-green-500 text-slate-800"
-                    }`}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-400 block uppercase">Time</label>
-                  <input 
-                    type="text" 
+                    required
+                    placeholder="e.g. 08:30"
                     value={newNodeForm.time}
                     onChange={(e) => setNewNodeForm({ ...newNodeForm, time: e.target.value })}
-                    className={`w-full px-3 py-2 text-xs rounded-xl border outline-none text-center transition ${
+                    className={`w-full px-3 py-2 text-xs rounded-xl border outline-none transition ${
                       isDark ? "bg-slate-900 border-slate-800 focus:border-green-500 text-white" : "bg-white border-slate-200 focus:border-green-500 text-slate-800"
                     }`}
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-400 block uppercase">Duration</label>
-                  <input 
-                    type="text" 
-                    value={newNodeForm.duration}
-                    onChange={(e) => setNewNodeForm({ ...newNodeForm, duration: e.target.value })}
-                    className={`w-full px-3 py-2 text-xs rounded-xl border outline-none text-center transition ${
-                      isDark ? "bg-slate-900 border-slate-800 focus:border-green-500 text-white" : "bg-white border-slate-200 focus:border-green-500 text-slate-800"
-                    }`}
-                  />
-                </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-slate-400 block uppercase">Category</label>
                   <select
                     value={newNodeForm.category}
-                    onChange={(e) => setNewNodeForm({ ...newNodeForm, category: e.target.value as any })}
+                    onChange={(e) => {
+                      const cat = e.target.value as any;
+                      const icons: Record<string, string> = { routine: "📅", health: "⚡", work: "💻", personal: "🏡", other: "🎯" };
+                      setNewNodeForm({ ...newNodeForm, category: cat, icon: icons[cat] || "🎯" });
+                    }}
                     className={`w-full px-3 py-2 text-xs rounded-xl border outline-none cursor-pointer transition ${
                       isDark ? "bg-slate-900 border-slate-800 focus:border-green-500 text-white" : "bg-white border-slate-200 focus:border-green-500 text-slate-800"
                     }`}
                   >
+                    <option value="routine">Routine</option>
+                    <option value="health">Habit / Health</option>
                     <option value="work">Work</option>
                     <option value="personal">Personal</option>
-                    <option value="health">Health</option>
-                    <option value="routine">Routine</option>
                     <option value="other">Other</option>
                   </select>
                 </div>
-
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-400 block uppercase">Energy Level</label>
-                  <select
-                    value={newNodeForm.energy}
-                    onChange={(e) => setNewNodeForm({ ...newNodeForm, energy: e.target.value as any })}
-                    className={`w-full px-3 py-2 text-xs rounded-xl border outline-none cursor-pointer transition ${
-                      isDark ? "bg-slate-900 border-slate-800 focus:border-green-500 text-white" : "bg-white border-slate-200 focus:border-green-500 text-slate-800"
-                    }`}
-                  >
-                    <option value="high">High Energy</option>
-                    <option value="medium">Medium</option>
-                    <option value="low">Low Energy</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-400 block uppercase">Parent Node Connection (Optional)</label>
-                <select
-                  value={newNodeForm.parentId}
-                  onChange={(e) => setNewNodeForm({ ...newNodeForm, parentId: e.target.value })}
-                  className={`w-full px-3 py-2 text-xs rounded-xl border outline-none cursor-pointer transition ${
-                    isDark ? "bg-slate-900 border-slate-800 focus:border-green-500 text-white" : "bg-white border-slate-200 focus:border-green-500 text-slate-800"
-                  }`}
-                >
-                  <option value="">No connection (Start Node)</option>
-                  {nodes.map(n => (
-                    <option key={n.id} value={n.id}>{n.icon} {n.title} ({n.time})</option>
-                  ))}
-                </select>
               </div>
 
               <button 

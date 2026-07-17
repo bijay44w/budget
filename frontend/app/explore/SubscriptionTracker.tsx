@@ -32,20 +32,7 @@ interface Subscription {
   status: "Active" | "Paused";
 }
 
-const DEFAULT_SUBS = [
-  { id: "1", name: "Netflix", plan: "Standard Plan", category: "Entertainment", billing: "Monthly", renewalDate: "2026-05-20", amount: 1490, status: "Active" },
-  { id: "2", name: "Spotify", plan: "Premium", category: "Entertainment", billing: "Monthly", renewalDate: "2026-05-22", amount: 980, status: "Active" },
-  { id: "3", name: "Adobe Creative Cloud", plan: "All Apps", category: "Productivity", billing: "Annual", renewalDate: "2026-05-30", amount: 6480, status: "Active" },
-  { id: "4", name: "Notion", plan: "Plus Plan", category: "Productivity", billing: "Monthly", renewalDate: "2026-06-05", amount: 1650, status: "Active" },
-  { id: "5", name: "YouTube Premium", plan: "Individual", category: "Entertainment", billing: "Monthly", renewalDate: "2026-06-08", amount: 1280, status: "Active" },
-  { id: "6", name: "Google One", plan: "2 TB Storage", category: "Productivity", billing: "Monthly", renewalDate: "2026-06-12", amount: 1300, status: "Active" },
-  { id: "7", name: "Microsoft 365", plan: "Family Plan", category: "Productivity", billing: "Annual", renewalDate: "2026-06-25", amount: 1150, status: "Active" },
-  { id: "8", name: "AWS", plan: "Developer Support", category: "Utilities", billing: "Monthly", renewalDate: "2026-06-01", amount: 2500, status: "Active" },
-  { id: "9", name: "GitHub Copilot", plan: "Individual", category: "Productivity", billing: "Monthly", renewalDate: "2026-06-15", amount: 1500, status: "Active" },
-  { id: "10", name: "ChatGPT Plus", plan: "Plus Plan", category: "Productivity", billing: "Monthly", renewalDate: "2026-06-18", amount: 3000, status: "Active" },
-  { id: "11", name: "Apple One", plan: "Individual", category: "Entertainment", billing: "Monthly", renewalDate: "2026-06-20", amount: 1980, status: "Active" },
-  { id: "12", name: "Duolingo", plan: "Super Duolingo", category: "Education", billing: "Annual", renewalDate: "2026-07-02", amount: 2000, status: "Active" },
-] as Subscription[];
+const DEFAULT_SUBS = [] as Subscription[];
 
 const SubscriptionLogo = ({ name }: { name: string }) => {
   const n = name.toLowerCase();
@@ -239,14 +226,7 @@ export default function SubscriptionTracker({ isDark, currency, fmt }: { isDark:
             <span>May 16, 2026</span>
           </div>
 
-          <div className="relative">
-            <button className={`p-1.5 rounded-lg border flex items-center justify-center ${
-              isDark ? "border-slate-700 bg-slate-900 text-slate-300" : "border-slate-200 bg-white text-slate-600"
-            }`}>
-              <Bell className="w-4 h-4" />
-              <span className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-green-600 text-white text-[9px] font-bold flex items-center justify-center">3</span>
-            </button>
-          </div>
+          
 
           <button
             onClick={() => {
@@ -526,37 +506,7 @@ export default function SubscriptionTracker({ isDark, currency, fmt }: { isDark:
             </div>
           </div>
 
-          {/* Insights & Recommendations */}
-          <div className={`${cardClass} flex-1 flex flex-col justify-between`}>
-            <div>
-              <p className="text-sm font-bold mb-3">Insights & Recommendations</p>
-              <div className="space-y-3.5">
-                {[
-                  { title: "You can save ¥2,400", desc: "by switching to annual plans", icon: TrendingUp, color: "text-green-600 dark:text-green-400", bg: "bg-green-100 dark:bg-green-950/40" },
-                  { title: "2 unused subscriptions", desc: "haven't been used in 30+ days", icon: AlertTriangle, color: "text-purple-600 dark:text-purple-400", bg: "bg-purple-100 dark:bg-purple-950/40" },
-                  { title: "Renewal reminder", desc: "Enable email alerts for better tracking", icon: Bell, color: "text-orange-600 dark:text-orange-400", bg: "bg-orange-100 dark:bg-orange-950/40" }
-                ].map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between text-xs hover:bg-slate-50/50 dark:hover:bg-slate-900/30 p-1.5 rounded-lg transition cursor-pointer">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${item.bg}`}>
-                        <item.icon className={`w-4 h-4 ${item.color}`} />
-                      </div>
-                      <div>
-                        <p className="font-bold text-slate-800 dark:text-slate-200">{item.title}</p>
-                        <p className="text-[10px] text-slate-400 mt-0.5">{item.desc}</p>
-                      </div>
-                    </div>
-                    <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-center">
-              <button className="text-xs font-bold text-green-600 dark:text-green-400 flex items-center gap-1.5 hover:underline cursor-pointer">
-                View all insights <span>→</span>
-              </button>
-            </div>
-          </div>
+          
         </div>
       </div>
 

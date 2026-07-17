@@ -65,15 +65,6 @@ export default function CookieBanner() {
       <div className="flex flex-col gap-4">
         {/* Main Content Row */}
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
-          {/* Cookie Illustration */}
-          <div className="flex-shrink-0 relative group">
-            <img
-              src={isDarkMode ? "/cookie-dark.png" : "/cookie.png"}
-              alt="Cookie Illustration"
-              className="w-20 h-20 md:w-24 md:h-24 object-contain select-none pointer-events-none transition-transform duration-500 group-hover:rotate-12"
-            />
-          </div>
-
           {/* Text Description */}
           <div className="flex-1 min-w-0">
             <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">

@@ -10,7 +10,7 @@ import { Wallet, TrendingUp, PiggyBank, CreditCard, Home, CircleDollarSign } fro
 // --- Types (matches explore page) ---
 interface FlowNode {
   id: string;
-  type: "income" | "needs" | "savings" | "investments" | "debt" | "custom";
+  type: "income" | "needs" | "savings" | "investments" | "debt" | "custom" | "expense";
   name: string;
   amount: number;
   x: number;
@@ -23,7 +23,8 @@ interface BudgetDashboardProps {
   fmt: (n: number) => string;
   isDark: boolean;
   currency: string;
-  selectedMonth: string;
+  selectedMonth?: string;
+  allBudgets?: any[];
 }
 
 const TYPE_COLORS: Record<string, string> = {
@@ -53,24 +54,16 @@ const TYPE_ICONS: Record<string, React.ElementType> = {
   custom: CircleDollarSign,
 };
 
-export default function BudgetDashboard({ nodes, fmt, isDark, currency, selectedMonth }: BudgetDashboardProps) {
+export default function BudgetDashboard({ nodes, fmt, isDark, currency }: BudgetDashboardProps) {
   const incomeNodes = nodes.filter(n => n.type === "income");
   const expenseNodes = nodes.filter(n => n.type !== "income");
   const totalIncome = incomeNodes.reduce((s, n) => s + n.amount, 0);
-
-  // Only use top-level allocations to prevent double-counting in calculations and charts!
-  const topLevelAllocations = expenseNodes.filter(n => {
-    if (!n.parentId) return true;
-    const parentNode = nodes.find(p => p.id === n.parentId);
-    return !parentNode || parentNode.type === "income";
-  });
-
-  const totalPlanned = topLevelAllocations.reduce((s, n) => s + n.amount, 0);
+  const totalPlanned = expenseNodes.reduce((s, n) => s + n.amount, 0);
   const remaining = totalIncome - totalPlanned;
   const allocationPct = totalIncome > 0 ? Math.round((totalPlanned / totalIncome) * 100) : 0;
 
   // Group by type for breakdown
-  const typeGroups = topLevelAllocations.reduce<Record<string, { amount: number; count: number }>>((acc, n) => {
+  const typeGroups = expenseNodes.reduce<Record<string, { amount: number; count: number }>>((acc, n) => {
     acc[n.type] = acc[n.type] || { amount: 0, count: 0 };
     acc[n.type].amount += n.amount;
     acc[n.type].count += 1;
@@ -88,7 +81,7 @@ export default function BudgetDashboard({ nodes, fmt, isDark, currency, selected
     .sort((a, b) => b.value - a.value);
 
   // Individual items for bar chart (top 8)
-  const itemBars = topLevelAllocations
+  const itemBars = expenseNodes
     .filter(n => n.amount > 0)
     .sort((a, b) => b.amount - a.amount)
     .slice(0, 8)
@@ -137,17 +130,8 @@ export default function BudgetDashboard({ nodes, fmt, isDark, currency, selected
           <h1 className="text-lg font-bold">Analytics Dashboard</h1>
           <p className="text-[11px] text-slate-400">Visualize your financial data and understand your money better</p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className={`text-[10px] px-3 py-1.5 rounded-lg font-semibold ${isDark ? "bg-slate-800 text-slate-300" : "bg-slate-100 text-slate-600"}`}>
-            Period: {(() => {
-              const [y, mm] = selectedMonth.split("-");
-              const date = new Date(Number(y), Number(mm) - 1);
-              return date.toLocaleDateString(undefined, { month: "long", year: "numeric" });
-            })()}
-          </div>
-          <div className={`text-[10px] px-3 py-1.5 rounded-lg ${isDark ? "bg-slate-800 text-slate-400" : "bg-slate-100 text-slate-500"}`}>
-            All amounts in {currency}
-          </div>
+        <div className={`text-[10px] px-3 py-1.5 rounded-lg ${isDark ? "bg-slate-800 text-slate-400" : "bg-slate-100 text-slate-500"}`}>
+          All amounts in {currency}
         </div>
       </div>
 
@@ -244,7 +228,7 @@ export default function BudgetDashboard({ nodes, fmt, isDark, currency, selected
                   <XAxis type="number" hide />
                   <YAxis type="category" dataKey="name" width={90} tick={{ fontSize: 11, fill: isDark ? "#94a3b8" : "#64748b" }} axisLine={false} tickLine={false} />
                   <Tooltip
-                    formatter={(v: any) => fmt(Number(v) || 0)}
+                    formatter={(v: any) => fmt(v)}
                     contentStyle={{ background: isDark ? "#1e293b" : "#fff", border: "none", borderRadius: 8, fontSize: 12, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}
                     labelStyle={{ fontWeight: 600 }}
                     cursor={{ fill: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)" }}

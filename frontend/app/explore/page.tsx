@@ -8,12 +8,14 @@ import {
   Trash2, Undo2, Redo2, LayoutGrid, Save, Check, Lightbulb,
   Utensils, Train, Zap, ShoppingBag, Gamepad2, CircleDollarSign,
   Calendar, ChevronDown, X, PieChart, BarChart3, Shield,
-  LayoutDashboard, Receipt, ClipboardList, Target, Settings, LogOut, User
+  LayoutDashboard, Receipt, ClipboardList, Target, Settings, LogOut, User, Award
 } from "lucide-react";
 import { useUser, useClerk } from "@clerk/nextjs";
 import UserProfileButton from "../UserProfileButton";
 import BudgetDashboard from "./BudgetDashboard";
+import SubscriptionTracker from "./SubscriptionTracker";
 import Link from "next/link";
+import FlowNode from "./FlowNode";
 
 // --- LOGO ---
 const TreeLogo = ({ className }: { className?: string }) => (
@@ -27,7 +29,7 @@ const TreeLogo = ({ className }: { className?: string }) => (
 // --- TYPES ---
 interface FlowNode {
   id: string;
-  type: "income" | "needs" | "savings" | "investments" | "debt" | "custom";
+  type: "income" | "needs" | "savings" | "investments" | "debt" | "custom" | "expense";
   name: string;
   amount: number;
   x: number;
@@ -41,17 +43,17 @@ const NODE_H = 60;
 
 const NAV_ITEMS = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "transactions", label: "Transactions", icon: Receipt },
   { id: "plan", label: "Plan", icon: ClipboardList },
-  { id: "goals", label: "Goals", icon: Target },
   { id: "reports", label: "Reports", icon: BarChart3 },
+  { id: "subscriptions", label: "Subscriptions", icon: CreditCard },
+  { id: "stocks", label: "FlowNode", icon: TrendingUp },
   { id: "settings", label: "Settings", icon: Settings },
 ];
 
 const NODE_TYPES: { type: FlowNode["type"]; label: string; iconColor: string; bgLight: string; bgDark: string }[] = [
   { type: "income", label: "Income", iconColor: "text-green-600", bgLight: "bg-green-50 border-green-200", bgDark: "dark:bg-green-950/40 dark:border-green-800 dark:text-green-400" },
   { type: "needs", label: "Needs", iconColor: "text-blue-600 dark:text-blue-400", bgLight: "bg-blue-50 border-blue-200", bgDark: "dark:bg-blue-950/40 dark:border-blue-800 dark:text-blue-400" },
-
+  { type: "expense", label: "Expense", iconColor: "text-rose-600 dark:text-rose-400", bgLight: "bg-rose-50 border-rose-200", bgDark: "dark:bg-rose-950/40 dark:border-rose-800 dark:text-rose-400" },
   { type: "savings", label: "Savings", iconColor: "text-emerald-600 dark:text-emerald-400", bgLight: "bg-emerald-50 border-emerald-200", bgDark: "dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-400" },
   { type: "investments", label: "Investments", iconColor: "text-purple-600 dark:text-purple-400", bgLight: "bg-purple-50 border-purple-200", bgDark: "dark:bg-purple-950/40 dark:border-purple-800 dark:text-purple-400" },
   { type: "debt", label: "Debt", iconColor: "text-red-600 dark:text-red-400", bgLight: "bg-red-50 border-red-200", bgDark: "dark:bg-red-950/40 dark:border-red-800 dark:text-red-400" },
@@ -61,7 +63,7 @@ const NODE_TYPES: { type: FlowNode["type"]; label: string; iconColor: string; bg
 const TYPE_STYLES: Record<string, { text: string; iconBg: string; border: string }> = {
   income: { text: "text-green-600 dark:text-green-400", iconBg: "bg-green-100 dark:bg-green-900/50", border: "border-green-200 dark:border-green-800/60" },
   needs: { text: "text-blue-600 dark:text-blue-400", iconBg: "bg-blue-100 dark:bg-blue-900/50", border: "border-blue-200 dark:border-blue-800/60" },
-
+  expense: { text: "text-rose-600 dark:text-rose-400", iconBg: "bg-rose-100 dark:bg-rose-900/50", border: "border-rose-200 dark:border-rose-800/60" },
   savings: { text: "text-emerald-600 dark:text-emerald-400", iconBg: "bg-emerald-100 dark:bg-emerald-900/50", border: "border-emerald-200 dark:border-emerald-800/60" },
   investments: { text: "text-purple-600 dark:text-purple-400", iconBg: "bg-purple-100 dark:bg-purple-900/50", border: "border-purple-200 dark:border-purple-800/60" },
   debt: { text: "text-red-600 dark:text-red-400", iconBg: "bg-red-100 dark:bg-red-900/50", border: "border-red-200 dark:border-red-800/60" },
@@ -88,6 +90,7 @@ const getNodeIcon = (name: string, type: string) => {
   if (type === "savings") return PiggyBank;
   if (type === "investments") return TrendingUp;
   if (type === "debt") return CreditCard;
+  if (type === "expense") return CreditCard;
   return CircleDollarSign;
 };
 
@@ -164,11 +167,28 @@ export default function BudgetPlanPage() {
     return date.toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" });
   };
 
+  const canHaveChildren = (n: FlowNode) => {
+    if (n.type === "income") return true;
+    if (!n.parentId) return true;
+    const parentNode = nodes.find(p => p.id === n.parentId);
+    return parentNode?.type === "income";
+  };
+
   // --- NAV ---
   const [activeNav, setActiveNav] = useState("dashboard");
 
   // --- MULTI-BUDGET ---
   const [allBudgets, setAllBudgets] = useState<any[]>([]);
+  const [budgetName, setBudgetName] = useState("");
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [tempName, setTempName] = useState("");
+  const [showNewPlanModal, setShowNewPlanModal] = useState(false);
+  const [newPlanName, setNewPlanName] = useState("");
+  const [newPlanDate, setNewPlanDate] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  });
+  const [cloneFromId, setCloneFromId] = useState("");
 
   // --- CANVAS ---
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -247,33 +267,60 @@ export default function BudgetPlanPage() {
       const b = budgets?.[0];
       if (b) {
         setBudgetId(b.id);
+        setBudgetName(b.name || `Budget Plan - ${formatDateStr(dateVal)}`);
         try {
           const meta = JSON.parse(b.metadata || "{}");
           if (meta.plannerNodes?.length) { setNodes(meta.plannerNodes); }
           else { setNodes([]); }
         } catch { setNodes([]); }
       } else {
+        const defaultName = `Budget Plan - ${formatDateStr(dateVal)}`;
         const payload = {
-          name: `Budget Plan - ${formatDateStr(dateVal)}`,
+          name: defaultName,
           income: 0,
           tags: dateVal,
           categories: [],
           metadata: JSON.stringify({ plannerNodes: [] })
         };
         const cr = await fetch("http://localhost:8080/api/budgets", { method: "POST", headers: getHeaders(), body: JSON.stringify(payload) });
-        if (cr.ok) { const nb = await cr.json(); setBudgetId(nb.id); }
+        if (cr.ok) {
+          const nb = await cr.json();
+          setBudgetId(nb.id);
+          setBudgetName(nb.name || defaultName);
+        }
         setNodes([]);
       }
     } catch (e) { console.error(e); } finally { setIsLoading(false); }
   };
 
-  const saveBudget = useCallback(async (nodesToSave: FlowNode[]) => {
+  const loadBudgetById = async (id: number) => {
+    if (!isLoaded || !user) return;
+    try {
+      setIsLoading(true);
+      const res = await fetch(`http://localhost:8080/api/budgets/${id}`, { headers: getHeaders() });
+      if (!res.ok) throw new Error();
+      const b = await res.json();
+      if (b) {
+        setBudgetId(b.id);
+        setBudgetName(b.name || `Budget Plan - ${formatDateStr(b.tags)}`);
+        setSelectedDate(b.tags || selectedDate);
+        try {
+          const meta = JSON.parse(b.metadata || "{}");
+          if (meta.plannerNodes?.length) { setNodes(meta.plannerNodes); }
+          else { setNodes([]); }
+        } catch { setNodes([]); }
+      }
+    } catch (e) { console.error(e); } finally { setIsLoading(false); }
+  };
+
+  const saveBudget = useCallback(async (nodesToSave: FlowNode[], nameOverride?: string) => {
     if (!budgetId) return;
     try {
       setSaving(true);
       const inc = nodesToSave.find(n => n.type === "income");
+      const nameToSave = nameOverride !== undefined ? nameOverride : (budgetName || `Budget Plan - ${formatDateStr(selectedDate)}`);
       const payload = {
-        name: `Budget Plan - ${formatDateStr(selectedDate)}`,
+        name: nameToSave,
         income: inc?.amount || 0,
         tags: selectedDate,
         categories: nodesToSave.filter(n => n.type !== "income").map(n => {
@@ -287,15 +334,13 @@ export default function BudgetPlanPage() {
       const res = await fetch(`http://localhost:8080/api/budgets/${budgetId}`, { method: "PUT", headers: getHeaders(), body: JSON.stringify(payload) });
       if (res.ok) setAutoSaved(true);
     } catch (e) { console.error(e); } finally { setSaving(false); }
-  }, [budgetId, user, selectedDate]);
+  }, [budgetId, user, selectedDate, budgetName]);
 
   const scheduleAutoSave = useCallback((newNodes: FlowNode[]) => {
     setAutoSaved(false);
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => saveBudget(newNodes), 2000);
   }, [saveBudget]);
-
-
 
   const handleStartNewBudget = async () => {
     if (!isLoaded || !user) return;
@@ -321,6 +366,7 @@ export default function BudgetPlanPage() {
       if (b) {
         setBudgetId(b.id);
         setSelectedDate(todayVal);
+        setBudgetName(b.name || `Budget Plan - ${formatDateStr(todayVal)}`);
         try {
           const meta = JSON.parse(b.metadata || "{}");
           if (meta.plannerNodes?.length) { setNodes(meta.plannerNodes); }
@@ -340,6 +386,7 @@ export default function BudgetPlanPage() {
   const handleOpenBudget = (budget: any) => {
     setBudgetId(budget.id);
     setSelectedDate(budget.tags || selectedDate);
+    setBudgetName(budget.name || `Budget Plan - ${formatDateStr(budget.tags)}`);
     try {
       const meta = JSON.parse(budget.metadata || "{}");
       if (meta.plannerNodes?.length) { setNodes(meta.plannerNodes); }
@@ -349,12 +396,86 @@ export default function BudgetPlanPage() {
     setActiveNav("plan");
   };
 
+  const handleCreateNewPlan = async () => {
+    if (!newPlanName.trim()) return;
+    try {
+      setIsLoading(true);
+      
+      let plannerNodes = [];
+      let income = 0;
+      let categories = [];
+      
+      if (cloneFromId) {
+        const selectedParent = allBudgets.find(b => b.id === Number(cloneFromId));
+        if (selectedParent) {
+          income = selectedParent.income || 0;
+          try {
+            const meta = JSON.parse(selectedParent.metadata || "{}");
+            plannerNodes = meta.plannerNodes || [];
+          } catch {}
+          categories = selectedParent.categories || [];
+        }
+      }
+      
+      const payload = {
+        name: newPlanName.trim(),
+        income: income,
+        tags: newPlanDate,
+        categories: categories.map((c: any) => ({ name: c.name, amount: c.amount, type: c.type })),
+        metadata: JSON.stringify({ plannerNodes })
+      };
+      
+      const res = await fetch("http://localhost:8080/api/budgets", {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        const newBudget = await res.json();
+        setBudgetId(newBudget.id);
+        setSelectedDate(newBudget.tags);
+        setBudgetName(newBudget.name);
+        setNodes(plannerNodes);
+        setShowNewPlanModal(false);
+        setNewPlanName("");
+        setCloneFromId("");
+        setActiveNav("plan");
+        loadAllBudgets();
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (isLoaded && user) {
-      loadBudget(selectedDate);
-      loadAllBudgets();
+      const initLoad = async () => {
+        try {
+          setIsLoading(true);
+          const res = await fetch("http://localhost:8080/api/budgets", { headers: getHeaders() });
+          if (res.ok) {
+            const budgets = await res.json();
+            setAllBudgets(budgets || []);
+            const userBudgets = budgets?.filter((b: any) => b.parent_budget_id === null || b.user_id !== 1) || [];
+            if (userBudgets.length > 0) {
+              handleOpenBudget(userBudgets[0]);
+            } else {
+              const today = new Date();
+              const todayVal = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+              await loadBudget(todayVal);
+            }
+          }
+        } catch (e) {
+          console.error(e);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      initLoad();
     }
-  }, [isLoaded, user, selectedDate]);
+  }, [isLoaded, user]);
 
   const updateNodes = (updater: (prev: FlowNode[]) => FlowNode[]) => {
     setNodes(prev => {
@@ -397,6 +518,20 @@ export default function BudgetPlanPage() {
 
   const totalPlanned = topLevelAllocations.reduce((s, n) => s + n.amount, 0);
   const remaining = totalIncome - totalPlanned;
+
+  // Non-overlapping expenses vs savings breakdown
+  let totalExpenses = 0;
+  let totalSavingsInvest = 0;
+
+  allExpenseNodes.forEach(n => {
+    const childrenSum = nodes.filter(c => c.parentId === n.id).reduce((s, c) => s + c.amount, 0);
+    const ownAmount = Math.max(0, n.amount - childrenSum);
+    if (["savings", "investments"].includes(n.type)) {
+      totalSavingsInvest += ownAmount;
+    } else {
+      totalExpenses += ownAmount;
+    }
+  });
   const edges = nodes.filter(n => n.parentId).map(n => ({ from: n.parentId!, to: n.id }));
 
   // --- ADD / DELETE ---
@@ -404,7 +539,7 @@ export default function BudgetPlanPage() {
     const rect = canvasRef.current?.getBoundingClientRect();
     const cx = rect ? (rect.width / 2 - pan.x) / zoom : 400;
     const cy = rect ? (rect.height / 2 - pan.y) / zoom : 300;
-    const names: Record<string, string> = { income: "Income", needs: "Needs", savings: "Savings", investments: "Investments", debt: "Debt Payment", custom: "Custom" };
+    const names: Record<string, string> = { income: "Income", needs: "Needs", savings: "Savings", investments: "Investments", debt: "Debt Payment", custom: "Custom", expense: "Expense" };
     const id = newId();
     updateNodes(prev => [...prev, { id, type, name: names[type] || "Node", amount: 0, x: cx - NODE_W / 2 + (Math.random() * 80 - 40), y: cy - NODE_H / 2 + (Math.random() * 80 - 40), parentId: null }]);
     setSelectedId(id);
@@ -611,10 +746,20 @@ export default function BudgetPlanPage() {
         isDark ? "bg-[#0c1015] border-slate-800" : "bg-white border-slate-200"
       }`}>
         {/* Branding */}
-        <Link href="/" className="flex items-center gap-2.5 px-5 py-4 border-b border-slate-200 dark:border-slate-800">
-          <TreeLogo className="w-6 h-6 text-green-600" />
-          <span className="font-bold text-base tracking-wide">Budget Planner</span>
-        </Link>
+        {activeNav === "stocks" ? (
+          <div className="flex flex-col gap-0.5 px-5 py-3 border-b border-slate-200 dark:border-slate-800 select-none">
+            <div className="flex items-center gap-2 text-green-500">
+              <TrendingUp className="w-5 h-5 text-green-550" />
+              <span className="font-retro text-sm font-bold tracking-wider text-white">StockPlanner</span>
+            </div>
+            <span className="text-[9px] text-slate-500 font-semibold uppercase tracking-wider">Plan. Invest. Grow.</span>
+          </div>
+        ) : (
+          <Link href="/" className="flex items-center gap-2.5 px-5 py-4 border-b border-slate-200 dark:border-slate-800">
+            <TreeLogo className="w-6 h-6 text-green-600" />
+            <span className="font-bold text-base tracking-wide">Budget Planner</span>
+          </Link>
+        )}
 
         {/* Nav Items */}
         <div className="flex flex-col gap-0.5 p-3 flex-1">
@@ -625,7 +770,11 @@ export default function BudgetPlanPage() {
                 key={item.id}
                 onClick={() => {
                   if (item.id === "plan") {
-                    handleStartNewBudget();
+                    if (budgetId) {
+                      setActiveNav("plan");
+                    } else {
+                      handleStartNewBudget();
+                    }
                   } else {
                     setActiveNav(item.id);
                   }
@@ -654,7 +803,39 @@ export default function BudgetPlanPage() {
               isDark ? "border-slate-800 bg-[#0c1015]" : "border-slate-200 bg-white"
             }`}>
               <div>
-                <h1 className="text-lg font-bold">Budget Plan</h1>
+                {isEditingName ? (
+                  <input
+                    autoFocus
+                    value={tempName}
+                    onChange={(e) => setTempName(e.target.value)}
+                    onBlur={() => {
+                      setIsEditingName(false);
+                      const newName = tempName.trim() || budgetName || `Budget Plan - ${formatDateStr(selectedDate)}`;
+                      setBudgetName(newName);
+                      saveBudget(nodes, newName);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        setIsEditingName(false);
+                        const newName = tempName.trim() || budgetName || `Budget Plan - ${formatDateStr(selectedDate)}`;
+                        setBudgetName(newName);
+                        saveBudget(nodes, newName);
+                      }
+                    }}
+                    className="text-lg font-bold bg-transparent border-b border-green-500 outline-none w-48"
+                  />
+                ) : (
+                  <h1
+                    onClick={() => {
+                      setIsEditingName(true);
+                      setTempName(budgetName || "");
+                    }}
+                    className="text-lg font-bold hover:text-green-500 cursor-pointer transition-colors"
+                    title="Click to rename"
+                  >
+                    {budgetName || "Budget Plan"}
+                  </h1>
+                )}
                 <p className="text-[11px] text-slate-400">Visualize and organize your money flow</p>
               </div>
               <div className="flex items-center gap-3">
@@ -698,6 +879,8 @@ export default function BudgetPlanPage() {
               {[
                 { label: "Total Income", value: fmt(totalIncome), sub: "Monthly Salary", icon: Wallet, ic: "text-green-500", ib: "bg-green-100 dark:bg-green-900/40" },
                 { label: "Total Planned", value: fmt(totalPlanned), sub: `${pct(totalPlanned, totalIncome)} of income`, icon: PieChart, ic: "text-blue-500", ib: "bg-blue-100 dark:bg-blue-900/40" },
+                { label: "Total Expenses", value: fmt(totalExpenses), sub: `${pct(totalExpenses, totalIncome)} of income`, icon: BarChart3, ic: "text-red-500", ib: "bg-red-100 dark:bg-red-900/40" },
+                { label: "Total Savings & Invest.", value: fmt(totalSavingsInvest), sub: `${pct(totalSavingsInvest, totalIncome)} of income`, icon: TrendingUp, ic: "text-teal-500", ib: "bg-teal-100 dark:bg-teal-900/40" },
                 { label: "Remaining", value: fmt(remaining), sub: remaining === 0 ? "✓ Fully allocated" : `${pct(remaining, totalIncome)} of income`, icon: Wallet, ic: remaining > 0 ? "text-amber-500" : "text-green-500", ib: remaining > 0 ? "bg-amber-100 dark:bg-amber-900/40" : "bg-green-100 dark:bg-green-900/40" },
               ].map(c => (
                 <div key={c.label} className={`flex-1 flex items-center gap-3 px-3 py-2.5 rounded-xl border ${
@@ -715,7 +898,7 @@ export default function BudgetPlanPage() {
               ))}
             </div>
             {showReport ? (
-              <BudgetDashboard nodes={nodes} fmt={fmt} isDark={isDark} currency={currency} selectedMonth={selectedDate} />
+              <BudgetDashboard nodes={nodes} fmt={fmt} isDark={isDark} currency={currency} selectedMonth={selectedDate} allBudgets={allBudgets} />
             ) : (<>
             {/* --- CANVAS AREA --- */}
             <div className="flex-1 relative overflow-hidden min-h-0">
@@ -822,12 +1005,14 @@ export default function BudgetPlanPage() {
                         </div>
 
                         {/* ★ GREEN CONNECTOR DOT — right edge */}
-                        <button
-                          onMouseDown={(e) => handleConnectorDragStart(e, node.id)}
-                          className="absolute -right-[7px] top-1/2 -translate-y-1/2 w-[14px] h-[14px] rounded-full bg-green-500 border-[3px] cursor-crosshair hover:scale-150 hover:shadow-[0_0_10px_rgba(34,197,94,0.7)] transition-all z-20"
-                          style={{ borderColor: isDark ? "#0f172a" : "#ffffff" }}
-                          title="Drag to connect to another node"
-                        />
+                        {canHaveChildren(node) && (
+                          <button
+                            onMouseDown={(e) => handleConnectorDragStart(e, node.id)}
+                            className="absolute -right-[7px] top-1/2 -translate-y-1/2 w-[14px] h-[14px] rounded-full bg-green-500 border-[3px] cursor-crosshair hover:scale-150 hover:shadow-[0_0_10px_rgba(34,197,94,0.7)] transition-all z-20"
+                            style={{ borderColor: isDark ? "#0f172a" : "#ffffff" }}
+                            title="Drag to connect to another node"
+                          />
+                        )}
 
                         {/* Dropdown Menu */}
                         {menuNodeId === node.id && (
@@ -836,7 +1021,9 @@ export default function BudgetPlanPage() {
                           }`} onMouseDown={e => e.stopPropagation()}>
                             <button onClick={() => { startEdit(node.id, "name"); setMenuNodeId(null); }} className={`w-full text-left px-3 py-2 cursor-pointer ${isDark ? "hover:bg-slate-800" : "hover:bg-slate-50"}`}>Rename</button>
                             <button onClick={() => { startEdit(node.id, "amount"); setMenuNodeId(null); }} className={`w-full text-left px-3 py-2 cursor-pointer ${isDark ? "hover:bg-slate-800" : "hover:bg-slate-50"}`}>Edit Amount</button>
-                            <button onClick={() => addChildNode(node.id)} className={`w-full text-left px-3 py-2 text-green-500 font-semibold cursor-pointer ${isDark ? "hover:bg-slate-800" : "hover:bg-slate-50"}`}>+ Add Child Node</button>
+                            {canHaveChildren(node) && (
+                              <button onClick={() => addChildNode(node.id)} className={`w-full text-left px-3 py-2 text-green-500 font-semibold cursor-pointer ${isDark ? "hover:bg-slate-800" : "hover:bg-slate-50"}`}>+ Add Child Node</button>
+                            )}
                             <div className={`border-t my-1 ${isDark ? "border-slate-700" : "border-slate-200"}`} />
                             {node.parentId && <button onClick={() => disconnectNode(node.id)} className={`w-full text-left px-3 py-2 cursor-pointer ${isDark ? "hover:bg-slate-800" : "hover:bg-slate-50"}`}>Disconnect</button>}
                             <button onClick={() => deleteNode(node.id)} className={`w-full text-left px-3 py-2 text-red-500 cursor-pointer ${isDark ? "hover:bg-red-900/20" : "hover:bg-red-50"}`}>Delete</button>
@@ -922,7 +1109,7 @@ export default function BudgetPlanPage() {
                   return (
                     <div className="relative w-full h-full p-0.5">
                       {nodes.map(nd => {
-                        const colors: Record<string, string> = { income: "bg-green-500", needs: "bg-blue-500", savings: "bg-emerald-500", investments: "bg-purple-500", debt: "bg-red-500", custom: "bg-slate-500" };
+                        const colors: Record<string, string> = { income: "bg-green-500", needs: "bg-blue-500", savings: "bg-emerald-500", investments: "bg-purple-500", debt: "bg-red-500", custom: "bg-slate-500", expense: "bg-rose-500" };
                         return <div key={nd.id} className={`absolute rounded-sm ${colors[nd.type] || "bg-slate-400"}`}
                           style={{ left: (nd.x - minX) * sc, top: (nd.y - minY) * sc, width: Math.max(NODE_W * sc, 4), height: Math.max(NODE_H * sc, 3), opacity: 0.7 }} />;
                       })}
@@ -942,11 +1129,22 @@ export default function BudgetPlanPage() {
           /* --- DASHBOARD BUDGETS LIST --- */
           <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
             {/* Header */}
-            <div className={`w-full border-b px-6 py-4 flex-shrink-0 ${isDark ? "border-slate-800 bg-[#0c1015]" : "border-slate-200 bg-white"}`}>
+            <div className={`w-full border-b px-6 py-4 flex-shrink-0 flex items-center justify-between ${isDark ? "border-slate-800 bg-[#0c1015]" : "border-slate-200 bg-white"}`}>
               <div>
                 <h1 className="text-lg font-bold">My Budgets</h1>
-                <p className="text-[11px] text-slate-400">Select a date to view or edit your budget plan</p>
+                <p className="text-[11px] text-slate-400 font-medium">Select a plan to view or edit your budget plan</p>
               </div>
+              <button
+                onClick={() => {
+                  setNewPlanName("");
+                  setNewPlanDate(new Date().toISOString().split("T")[0]);
+                  setCloneFromId("");
+                  setShowNewPlanModal(true);
+                }}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-green-600 hover:bg-green-700 text-white text-xs font-semibold transition cursor-pointer"
+              >
+                <Plus className="w-4 h-4" /> New Plan
+              </button>
             </div>
 
             {/* List/Grid of Date Cards */}
@@ -1026,7 +1224,11 @@ export default function BudgetPlanPage() {
             </div>
           </div>
         ) : activeNav === "reports" ? (
-          <BudgetDashboard nodes={nodes} fmt={fmt} isDark={isDark} currency={currency} selectedMonth={selectedDate} />
+          <BudgetDashboard nodes={nodes} fmt={fmt} isDark={isDark} currency={currency} selectedMonth={selectedDate} allBudgets={allBudgets} />
+        ) : activeNav === "subscriptions" ? (
+          <SubscriptionTracker isDark={isDark} currency={currency} fmt={fmt} />
+        ) : activeNav === "stocks" ? (
+          <FlowNode isDark={isDark} />
         ) : activeNav === "settings" ? (
           /* --- SETTINGS VIEW --- */
           <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
@@ -1124,10 +1326,106 @@ export default function BudgetPlanPage() {
               {(() => { const item = NAV_ITEMS.find(n => n.id === activeNav); return item ? <item.icon className="w-7 h-7 text-slate-400" /> : null; })()}
             </div>
             <h2 className="text-lg font-bold">{NAV_ITEMS.find(n => n.id === activeNav)?.label}</h2>
-            <p className="text-sm text-slate-400">Coming soon</p>
           </div>
         )}
       </div>
+
+      {/* ====== CREATE NEW PLAN MODAL ====== */}
+      {showNewPlanModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className={`w-full max-w-md rounded-2xl border p-6 shadow-2xl transition-all ${
+            isDark ? "bg-[#0c1015] border-slate-800 text-slate-200" : "bg-white border-slate-200 text-slate-800"
+          }`}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-bold text-slate-800 dark:text-slate-200">Create New Plan</h3>
+              <button
+                onClick={() => setShowNewPlanModal(false)}
+                className={`p-1 rounded cursor-pointer ${isDark ? "hover:bg-slate-800" : "hover:bg-slate-100"}`}
+              >
+                <X className="w-4 h-4 text-slate-400" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              {/* Plan Name */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-slate-400">Plan Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Summer Budget 2026"
+                  value={newPlanName}
+                  onChange={(e) => setNewPlanName(e.target.value)}
+                  className={`w-full px-3 py-2 text-sm rounded-xl border outline-none transition ${
+                    isDark
+                      ? "bg-slate-900 border-slate-800 focus:border-green-500 text-white"
+                      : "bg-white border-slate-200 focus:border-green-500 text-slate-800"
+                  }`}
+                />
+              </div>
+
+              {/* Month/Date */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-slate-400">Month / Date</label>
+                <input
+                  type="date"
+                  value={newPlanDate}
+                  onChange={(e) => setNewPlanDate(e.target.value)}
+                  className={`w-full px-3 py-2 text-sm rounded-xl border outline-none transition ${
+                    isDark
+                      ? "bg-slate-900 border-slate-800 focus:border-green-500 text-white"
+                      : "bg-white border-slate-200 focus:border-green-500 text-slate-800"
+                  }`}
+                />
+              </div>
+
+              {/* Clone From */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-semibold text-slate-400">Clone From (Optional)</label>
+                <select
+                  value={cloneFromId}
+                  onChange={(e) => setCloneFromId(e.target.value)}
+                  className={`w-full px-3 py-2 text-sm rounded-xl border outline-none transition ${
+                    isDark
+                      ? "bg-slate-900 border-slate-800 focus:border-green-500 text-white"
+                      : "bg-white border-slate-200 focus:border-green-500 text-slate-800"
+                  }`}
+                >
+                  <option value="">Blank Plan (Start from scratch)</option>
+                  {allBudgets.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name || `Budget Plan - ${formatDateStr(b.tags)}`} ({formatDateStr(b.tags)})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 mt-6">
+              <button
+                onClick={() => setShowNewPlanModal(false)}
+                className={`px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer border ${
+                  isDark
+                    ? "border-slate-800 hover:bg-slate-800 text-slate-300"
+                    : "border-slate-200 hover:bg-slate-50 text-slate-600"
+                }`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateNewPlan}
+                disabled={!newPlanName.trim()}
+                className={`px-4 py-2 rounded-xl text-xs font-semibold text-white transition cursor-pointer ${
+                  newPlanName.trim()
+                    ? "bg-green-600 hover:bg-green-700"
+                    : "bg-green-600/50 cursor-not-allowed"
+                }`}
+              >
+                Create Plan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

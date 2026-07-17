@@ -507,7 +507,7 @@ export default function LandingPage() {
             <h3 className={`font-retro text-2xl tracking-wider uppercase text-center mb-10 ${
               theme === "light" ? "text-slate-800" : "text-white"
             }`}>
-              🌳 The Core Lifecycle: Simple to Version Controlled
+               The Core Lifecycle: Simple to Version Controlled
             </h3>
 
             {/* Timeline / Flow Grid */}
@@ -559,7 +559,7 @@ export default function LandingPage() {
                   Track, Diff & Compare
                 </h4>
                 <p className={`text-sm leading-relaxed font-sans-inter ${theme === "light" ? "text-slate-600" : "text-slate-400"}`}>
-                  Watch live differential changes (🟢 Added, 🟠 Modified, 🔴 Removed) or compare alternative strategic versions side-by-side.
+                  Watch live differential changes ( Added,  Modified, Removed) or compare alternative strategic versions side-by-side.
                 </p>
               </div>
             </div>
@@ -660,17 +660,17 @@ export default function LandingPage() {
                 <div className={`p-2.5 rounded-lg border ${
                   theme === "light" ? "bg-emerald-50 border-emerald-100 text-emerald-600" : "bg-emerald-950/20 border-emerald-900/40 text-emerald-500"
                 }`}>
-                  🟢 Added
+                   Added
                 </div>
                 <div className={`p-2.5 rounded-lg border ${
                   theme === "light" ? "bg-amber-50 border-amber-100 text-amber-600" : "bg-amber-950/20 border-amber-900/40 text-amber-500"
                 }`}>
-                  🟠 Modified
+                  Modified
                 </div>
                 <div className={`p-2.5 rounded-lg border ${
                   theme === "light" ? "bg-rose-50 border-rose-100 text-rose-600" : "bg-rose-950/20 border-rose-900/40 text-rose-500"
                 }`}>
-                  🔴 Removed
+                   Removed
                 </div>
               </div>
             </div>

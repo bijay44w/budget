@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSignUp } from "@clerk/nextjs";
-import { Mail, Lock, Eye, EyeOff, GitFork, Star, ShieldCheck, Moon, Sun, KeyRound } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, Moon, Sun, KeyRound } from "lucide-react";
 import Link from "next/link";
 
 const TreeLogo = ({ className }: { className?: string }) => (
@@ -282,39 +282,6 @@ export default function SignUpPage() {
             <PixelBill className="absolute top-8 right-1/4 -rotate-[12deg] animate-float-fast" />
             <PixelBill className="absolute bottom-1/3 right-4 rotate-[18deg] animate-float-slow" />
             <PixelBill className="absolute bottom-8 left-1/3 rotate-[25deg] animate-float-medium" />
-          </div>
-
-          {/* Metrics Footer */}
-          <div className="grid grid-cols-3 border-t border-slate-200/60 dark:border-slate-800/80 pt-8 z-10 relative">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-50 dark:bg-green-950/20 text-green-600 dark:text-[#a8ff35] rounded-lg">
-                <GitFork className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="font-retro text-xl font-bold leading-tight">50K+</p>
-                <p className="font-share-mono text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400">Budget Forks</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-3 border-x border-slate-200/60 dark:border-slate-800/80 px-6">
-              <div className="p-2 bg-green-50 dark:bg-green-950/20 text-green-600 dark:text-[#a8ff35] rounded-lg">
-                <Star className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="font-retro text-xl font-bold leading-tight">4.9/5</p>
-                <p className="font-share-mono text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400">User Rating</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 pl-6">
-              <div className="p-2 bg-green-50 dark:bg-green-950/20 text-green-600 dark:text-[#a8ff35] rounded-lg">
-                <ShieldCheck className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="font-retro text-xl font-bold leading-tight">100%</p>
-                <p className="font-share-mono text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400">Private & Secure</p>
-              </div>
-            </div>
           </div>
         </section>
 

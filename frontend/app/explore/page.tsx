@@ -384,7 +384,7 @@ export default function BudgetPlanPage() {
     }
   };
 
-  const handleOpenBudget = (budget: any) => {
+  const handleOpenBudget = (budget: any, shouldSwitchTab = true) => {
     setBudgetId(budget.id);
     setSelectedDate(budget.tags || selectedDate);
     setBudgetName(budget.name || `Budget Plan - ${formatDateStr(budget.tags)}`);
@@ -394,7 +394,9 @@ export default function BudgetPlanPage() {
       else { setNodes([]); }
     } catch { setNodes([]); }
     setShowReport(false);
-    setActiveNav("plan");
+    if (shouldSwitchTab) {
+      setActiveNav("plan");
+    }
   };
 
   const handleCreateNewPlan = async () => {
@@ -462,7 +464,7 @@ export default function BudgetPlanPage() {
             setAllBudgets(budgets || []);
             const userBudgets = budgets?.filter((b: any) => b.parent_budget_id === null || b.user_id !== 1) || [];
             if (userBudgets.length > 0) {
-              handleOpenBudget(userBudgets[0]);
+              handleOpenBudget(userBudgets[0], false);
             } else {
               const today = new Date();
               const todayVal = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
